@@ -1,3 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <editline/readline.h>
+#include "mpc.h"
+
 // blisp AST node
 typedef struct bval {
   int type;

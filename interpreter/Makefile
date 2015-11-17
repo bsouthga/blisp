@@ -11,4 +11,5 @@ blisp:
 		-o ./bin/blisp
 
 clean:
-	rm ./bin/*
+	rm -rf ./bin
+	mkdir bin
