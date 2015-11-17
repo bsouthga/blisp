@@ -25,6 +25,27 @@ enum {
   BVAL_SYM
 };
 
+// forward declare functions
+bval* bval_num(long num);
+bval* bval_err(char* err);
+bval* bval_sym(char* sym);
+bval* bval_sexpr(void);
+bval* bval_read(mpc_ast_t* tree);
+bval* bval_read_num(mpc_ast_t* tree);
+bval* bval_add(bval* parent, bval* child);
+bval* bval_eval(bval* v);
+bval* bval_take(bval* v, int i);
+bval* bval_pop(bval* v, int i);
+bval* bval_eval_sexpr(bval* v);
+bval* builin_op(bval* v, char* op);
+
+void bval_del(bval* v);
+void bval_print(bval* v);
+void bval_println(bval* v);
+void bval_expr_print(bval* v, char open, char close);
+
+
+
 /**
  * blisp AST node constructors
  */
@@ -102,6 +123,7 @@ bval* bval_add(bval* parent, bval* child) {
   return parent;
 }
 
+
 /**
  * Read ast into bvals
  */
@@ -110,12 +132,12 @@ bval* bval_read(mpc_ast_t* tree) {
   if (strstr(tree->tag, "number")) return bval_read_num(tree);
   if (strstr(tree->tag, "symbol")) return bval_sym(tree->contents);
 
-  bval* x = NULL;
+
 
   // if we're at the root of the AST (the prompt) -> return void expr;
-  if (strstr(tree->tag, "sexpr") || strcmp(tree->tag, ">") == 0) {
-    x = bval_sexpr();
-  }
+  bval* x = NULL;
+  if (strcmp(tree->tag, ">") == 0) x = bval_sexpr();
+  if (strstr(tree->tag, "sexpr"))  x = bval_sexpr();
 
   // fill out children of x
   for (int i = 0; i < tree->children_num; i++) {
@@ -133,21 +155,105 @@ bval* bval_read(mpc_ast_t* tree) {
   return x;
 }
 
-
 /**
- * Print expression
+ * Transform sexpr for evaluation
  */
-void bval_print(bval* v); // forward declare for mutual recursion
-
-void bval_expr_print(bval* v, char open, char close) {
-  putchar(open);
-  for (int i = 0; i < v->count; i++) {
-    bval_print(v->cell[i]);
-    if (i != (v->count - 1)) putchar(' ');
-  }
-  putchar(close);
+bval* bval_eval(bval* v) {
+  if (v->type == BVAL_SEXPR) return bval_eval_sexpr(v);
+  return v;
 }
 
+bval* bval_eval_sexpr(bval* v) {
+
+  // eval children first
+  for (int i = 0; i < v->count; i++) {
+    v->cell[i] = bval_eval(v->cell[i]);
+    if (v->cell[i]->type == BVAL_ERR) return bval_take(v, i);
+  }
+
+  if (v->count == 0) return v;
+  if (v->count == 1) return bval_take(v, 0);
+
+  bval* f = bval_pop(v, 0);
+  if (f->type != BVAL_SYM) {
+    printf("Type is not symbol!");
+    bval_del(f);
+    bval_del(v);
+    return bval_err("S-expression does not start with symbol!");
+  }
+
+  bval* result = builin_op(v, f->sym);
+  bval_del(f);
+  return result;
+}
+
+bval* bval_take(bval* v, int i) {
+  bval* x = bval_pop(v, i);
+  bval_del(v);
+  return x;
+}
+
+bval* bval_pop(bval* v, int i) {
+  bval* x = v->cell[i];
+
+  memmove(
+    &v->cell[i],      // pointer address to element i
+    &v->cell[i+1],
+    sizeof(bval*) * (v->count - i - 1)
+  );
+
+  v->count--;
+  v->cell = realloc(v->cell, sizeof(bval*) * v->count);
+
+  return x;
+}
+
+
+bval* builin_op(bval* v, char* op) {
+
+  // currently can only accept number atoms
+  for (int i = 0; i < v->count; i++) {
+    if (v->cell[i]->type != BVAL_NUM) {
+      bval_del(v);
+      return bval_err("Cannot operate on non-number!");
+    }
+  }
+
+  bval* head = bval_pop(v, 0);
+
+  // unary negation operator
+  if (strcmp(op, "-") == 0 && v->count == 1) {
+    head->num = - head->num;
+  }
+
+  while(v->count) {
+    bval* next = bval_pop(v, 0);
+
+    if (strcmp(op, "+") == 0) head->num += next->num;
+    if (strcmp(op, "-") == 0) head->num -= next->num;
+    if (strcmp(op, "*") == 0) head->num *= next->num;
+    if (strcmp(op, "/") == 0) {
+      if (next->num == 0) {
+        bval_del(head);
+        bval_del(next);
+        head = bval_err("Division by zero!");
+        break;
+      }
+      head->num /= next->num;
+    }
+
+    bval_del(next);
+  }
+
+  bval_del(v);
+
+  return head;
+}
+
+
+/**
+ * Printing
+ */
 void bval_print(bval* v) {
   switch (v->type) {
     case BVAL_NUM:   printf("%li", v->num);        break;
@@ -156,64 +262,18 @@ void bval_print(bval* v) {
     case BVAL_SEXPR: bval_expr_print(v, '(', ')'); break;
   }
 }
-
-
 void bval_println(bval* v) {
   bval_print(v);
   putchar('\n');
 }
-
-
-// bval eval_symbol(bval x, char* op, bval y) {
-//   if (x.type == BVAL_ERR) return x;
-//   if (y.type == BVAL_ERR) return y;
-//
-//   if (strcmp(op, "+") == 0) return bval_num(x.num + y.num);
-//   if (strcmp(op, "-") == 0) return bval_num(x.num - y.num);
-//   if (strcmp(op, "*") == 0) return bval_num(x.num * y.num);
-//   if (strcmp(op, "/") == 0) {
-//     return y.num == 0
-//       ? bval_err(ERR_DIV_ZERO)
-//       : bval_num(x.num / y.num);
-//   }
-//
-//   return bval_err(ERR_BAD_OP);
-// }
-
-
-// bval eval(mpc_ast_t* tree) {
-//
-//   // if the tag is a number, parse and return
-//   if (strstr(tree->tag, "number")) {
-//     errno = 0;
-//     long x = strtol(tree->contents, NULL, 10);
-//     return errno != ERANGE
-//       ? bval_num(x)
-//       : bval_err(ERR_BAD_NUM);
-//   }
-//
-//   // symbol is always second child (after "(")
-//   char* op = tree->children[1]->contents;
-//
-//   // evaluate third child
-//   bval x = eval(tree->children[2]);
-//
-//   // evaluate remaining children
-//   int i = 3;
-//   while (strstr(tree->children[i]->tag, "expr")) {
-//     x = eval_symbol(x, op, eval(tree->children[i]));
-//     i++;
-//   }
-//
-//   if (strcmp(op, "-") == 0 && i == 3 && x.type == BVAL_NUM) {
-//     x.num = 0 - x.num;
-//   }
-//
-//   return x;
-// }
-
-
-
+void bval_expr_print(bval* v, char open, char close) {
+  putchar(open);
+  for (int i = 0; i < v->count; i++) {
+    bval_print(v->cell[i]);
+    if (i != (v->count - 1)) putchar(' ');
+  }
+  putchar(close);
+}
 
 
 int main(int argc, char** argv) {
@@ -248,7 +308,7 @@ int main(int argc, char** argv) {
 
     if (mpc_parse("<stdin>", input, Blisp, &r)) {
       // print the AST if valid
-      bval* v = bval_read(r.output);
+      bval* v = bval_eval(bval_read(r.output));
       bval_println(v);
       bval_del(v);
       mpc_ast_delete(r.output);

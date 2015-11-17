@@ -7,6 +7,7 @@ blisp:
 		./src/blisp.c ./src/mpc.c \
 		-ledit \
 		-lm \
+		-g \
 		-o ./bin/blisp
 
 clean:
