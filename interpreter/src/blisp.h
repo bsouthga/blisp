@@ -40,6 +40,7 @@ bval* bval_take(bval* v, int i);
 bval* bval_pop(bval* v, int i);
 bval* bval_join(bval* x, bval* y);
 bval* bval_eval_sexpr(bval* v);
+
 bval* builtin(bval* a, char* fn);
 bval* builtin_op(bval* v, char* op);
 bval* builtin_head(bval* a);
@@ -47,6 +48,9 @@ bval* builtin_tail(bval* a);
 bval* builtin_eval(bval* a);
 bval* builtin_join(bval* a);
 bval* builtin_list(bval* a);
+bval* builtin_cons(bval* a);
+bval* builtin_init(bval* a);
+bval* builtin_len(bval* a);
 
 
 void bval_del(bval* v);

@@ -3,14 +3,55 @@
 
 
 bval* builtin(bval* a, char* fn) {
-  if (strcmp("list", fn) == 0) return builtin_list(a);
-  if (strcmp("head", fn) == 0) return builtin_head(a);
-  if (strcmp("tail", fn) == 0) return builtin_tail(a);
-  if (strcmp("join", fn) == 0) return builtin_join(a);
-  if (strcmp("eval", fn) == 0) return builtin_eval(a);
-  if (strstr("+/*-%", fn))     return builtin_op(a, fn);
+  if (strcmp("list",  fn) == 0) return builtin_list(a);
+  if (strcmp("head",  fn) == 0) return builtin_head(a);
+  if (strcmp("tail",  fn) == 0) return builtin_tail(a);
+  if (strcmp("join",  fn) == 0) return builtin_join(a);
+  if (strcmp("eval",  fn) == 0) return builtin_eval(a);
+  if (strcmp("cons",  fn) == 0) return builtin_cons(a);
+  if (strcmp("len",   fn) == 0) return builtin_len(a);
+  if (strcmp("init",  fn) == 0) return builtin_init(a);
+  if (strstr("+/*-%", fn))      return builtin_op(a, fn);
+
   bval_del(a);
   return bval_err("Unknown function!");
+}
+
+
+bval* builtin_cons(bval* a) {
+  ASSERT(a, a->count == 2, "Function 'cons' requires 2 arguments!");
+  ASSERT(a, a->cell[1]->type == BVAL_QEXPR, "Function 'cons' passed incorrect type as second argument!");
+
+  // create a new q expression with the first arg of cons
+  // as its first element
+  bval* v = bval_add(bval_qexpr(), bval_pop(a, 0));
+
+  // join the new q expression with the qexpr passed to cons
+  v = bval_join(v, bval_pop(a, 0));
+
+  bval_del(a);
+  return v;
+}
+
+
+bval* builtin_init(bval* a) {
+  ASSERT(a, a->count == 1, "Function 'init' passed too may arguments");
+  ASSERT(a, a->cell[0]->type == BVAL_QEXPR, "Function 'init' passed incorrect type!");
+  ASSERT(a, a->cell[0]->count != 0, "Function 'init' passed empty list!");
+
+  bval* v = bval_take(a, 0);
+  bval_del(bval_pop(v, v->count - 1));
+  return v;
+}
+
+
+bval* builtin_len(bval* a) {
+  ASSERT(a, a->count == 1, "Function 'len' passed too may arguments");
+  ASSERT(a, a->cell[0]->type == BVAL_QEXPR, "Function 'len' passed incorrect type!");
+
+  bval* v = bval_num((double) a->cell[0]->count);
+  bval_del(a);
+  return v;
 }
 
 

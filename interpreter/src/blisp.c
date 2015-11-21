@@ -20,6 +20,9 @@ int main(int argc, char** argv) {
                    \"tail\" | \
                    \"join\" | \
                    \"eval\" | \
+                   \"cons\" | \
+                   \"len\"  | \
+                   \"init\" | \
                    '+' | '-' | '*' | '/' | '%'              ;\
         sexpr    : '(' <expr>* ')'                          ;\
         qexpr    : '{' <expr>* '}'                          ;\
