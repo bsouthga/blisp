@@ -11,7 +11,7 @@ typedef struct bval {
   char* err;
   char* sym;
 
-  long num;
+  double num;
 
   // recursive list of child nodes
   struct bval** cell;
@@ -26,7 +26,7 @@ enum {
 };
 
 // forward declare functions
-bval* bval_num(long num);
+bval* bval_num(double num);
 bval* bval_err(char* err);
 bval* bval_sym(char* sym);
 bval* bval_sexpr(void);

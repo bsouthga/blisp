@@ -3,7 +3,7 @@
 /**
  * blisp AST node constructors
  */
-bval* bval_num(long num) {
+bval* bval_num(double num) {
   bval* v = malloc(sizeof(bval));
   v->type = BVAL_NUM;
   v->num = num;
@@ -60,7 +60,7 @@ void bval_del(bval* v) {
  */
 bval* bval_read_num(mpc_ast_t* tree) {
   errno = 0; // special variable indicating error flags
-  long num = strtol(tree->contents, NULL, 10);
+  double num = strtod(tree->contents, NULL);
   return errno != ERANGE
     ? bval_num(num)
     : bval_err("invald number");
@@ -186,12 +186,21 @@ bval* builin_op(bval* v, char* op) {
     if (strcmp(op, "+") == 0) head->num += next->num;
     if (strcmp(op, "-") == 0) head->num -= next->num;
     if (strcmp(op, "*") == 0) head->num *= next->num;
+
+    if (strcmp(op, "%") == 0) {
+      if (next->num == 0) {
+        bval_del(head);
+        bval_del(next);
+        return bval_err("Modulus by zero!");
+      }
+      head->num = fmod(head->num, next->num);
+    }
+
     if (strcmp(op, "/") == 0) {
       if (next->num == 0) {
         bval_del(head);
         bval_del(next);
-        head = bval_err("Division by zero!");
-        break;
+        return bval_err("Division by zero!");
       }
       head->num /= next->num;
     }
@@ -210,7 +219,7 @@ bval* builin_op(bval* v, char* op) {
  */
 void bval_print(bval* v) {
   switch (v->type) {
-    case BVAL_NUM:   printf("%li", v->num);        break;
+    case BVAL_NUM:   printf("%lf", v->num);        break;
     case BVAL_ERR:   printf("Error: %s", v->err);  break;
     case BVAL_SYM:   printf("%s", v->sym);         break;
     case BVAL_SEXPR: bval_expr_print(v, '(', ')'); break;
@@ -241,8 +250,8 @@ int main(int argc, char** argv) {
 
   mpca_lang(MPCA_LANG_DEFAULT,
     "\
-        number   : /-?[0-9]+/                           ;\
-        symbol   : '+' | '-' | '*' | '/'                ;\
+        number   : /-?[0-9]+(\\.[0-9]+)?/               ;\
+        symbol   : '+' | '-' | '*' | '/' | '%'          ;\
         sexpr    : '(' <expr>* ')'                      ;\
         expr     : <number> | <symbol> | <sexpr>        ;\
         blisp    : /^/ <expr>* /$/                      ;\
@@ -277,6 +286,5 @@ int main(int argc, char** argv) {
 
   // delete parsers
   mpc_cleanup(5, Number, Symbol, Sexpr, Expr, Blisp);
-
   return 0;
 }
