@@ -4,13 +4,18 @@
  */
 #define ASSERT_QEXPR_ARG(a, index, name) \
   ASSERT(a, a->cell[index]->type == BVAL_QEXPR, \
-    "Function '%s' needs q-expression as argument %fi!", name, index + 1);
+    "Function '%s' needs q-expression as argument %i!", \
+    name, index);
 
 #define ASSERT_ARG_LEN(a, len, name) \
-  ASSERT(a, a->count == len, "Function '%s' requires %fi arguments!", name, len);
+  ASSERT(a, a->count == len, \
+    "Function '%s' given %i arguments, expected %i", \
+    name, a->count, len);
 
 #define ASSERT_NOT_EMPTY(a, name) \
-  ASSERT(a, a->cell[0]->count != 0, "Function '%s' passed empty list!", name);
+  ASSERT(a, a->cell[0]->count != 0, \
+    "Function '%s' passed empty list!", \
+    name);
 
 
 // math builtins
