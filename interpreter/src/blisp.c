@@ -31,6 +31,14 @@ bval* bval_sexpr(void) {
   v->cell = NULL;
   return v;
 }
+bval* bval_qexpr(void) {
+  bval* v = malloc(sizeof(bval));
+  v->type = BVAL_QEXPR;
+  v->count = 0;
+  v->cell = NULL;
+  return v;
+}
+
 
 /**
  * blisp AST node destructor
@@ -41,6 +49,8 @@ void bval_del(bval* v) {
     case BVAL_NUM: break; // no property pointers for BVAL_NUM
     case BVAL_ERR: free(v->err); break;
     case BVAL_SYM: free(v->sym); break;
+
+    case BVAL_QEXPR:
     case BVAL_SEXPR:
       // deallocate child nodes
       for (int i = 0; i < v->count; i++) {
@@ -92,6 +102,7 @@ bval* bval_read(mpc_ast_t* tree) {
   bval* x = NULL;
   if (strcmp(tree->tag, ">") == 0) x = bval_sexpr();
   if (strstr(tree->tag, "sexpr"))  x = bval_sexpr();
+  if (strstr(tree->tag, "qexpr"))  x = bval_qexpr();
 
   // fill out children of x
   for (int i = 0; i < tree->children_num; i++) {
@@ -223,6 +234,7 @@ void bval_print(bval* v) {
     case BVAL_ERR:   printf("Error: %s", v->err);  break;
     case BVAL_SYM:   printf("%s", v->sym);         break;
     case BVAL_SEXPR: bval_expr_print(v, '(', ')'); break;
+    case BVAL_QEXPR: bval_expr_print(v, '{', '}'); break;
   }
 }
 void bval_println(bval* v) {
@@ -245,18 +257,20 @@ int main(int argc, char** argv) {
   mpc_parser_t* Number    = mpc_new("number");
   mpc_parser_t* Symbol    = mpc_new("symbol");
   mpc_parser_t* Sexpr     = mpc_new("sexpr");
+  mpc_parser_t* Qexpr     = mpc_new("qexpr");
   mpc_parser_t* Expr      = mpc_new("expr");
   mpc_parser_t* Blisp     = mpc_new("blisp");
 
   mpca_lang(MPCA_LANG_DEFAULT,
     "\
-        number   : /-?[0-9]+(\\.[0-9]+)?/               ;\
-        symbol   : '+' | '-' | '*' | '/' | '%'          ;\
-        sexpr    : '(' <expr>* ')'                      ;\
-        expr     : <number> | <symbol> | <sexpr>        ;\
-        blisp    : /^/ <expr>* /$/                      ;\
+        number   : /-?[0-9]+(\\.[0-9]+)?/                   ;\
+        symbol   : '+' | '-' | '*' | '/' | '%'              ;\
+        sexpr    : '(' <expr>* ')'                          ;\
+        qexpr    : '{' <expr>* '}'                          ;\
+        expr     : <number> | <symbol> | <sexpr> | <qexpr>  ;\
+        blisp    : /^/ <expr>* /$/                          ;\
     ",
-    Number, Symbol, Sexpr, Expr, Blisp);
+    Number, Symbol, Sexpr,  Qexpr, Expr, Blisp);
 
   puts("blisp version 0.0.1");
   puts("press ^C to Exit\n");
@@ -285,6 +299,6 @@ int main(int argc, char** argv) {
   }
 
   // delete parsers
-  mpc_cleanup(5, Number, Symbol, Sexpr, Expr, Blisp);
+  mpc_cleanup(6, Number, Symbol, Sexpr, Qexpr, Expr, Blisp);
   return 0;
 }

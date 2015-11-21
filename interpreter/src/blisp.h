@@ -22,6 +22,7 @@ enum {
   BVAL_NUM,
   BVAL_ERR,
   BVAL_SEXPR,
+  BVAL_QEXPR,
   BVAL_SYM
 };
 
@@ -30,6 +31,7 @@ bval* bval_num(double num);
 bval* bval_err(char* err);
 bval* bval_sym(char* sym);
 bval* bval_sexpr(void);
+bval* bval_qexpr(void);
 bval* bval_read(mpc_ast_t* tree);
 bval* bval_read_num(mpc_ast_t* tree);
 bval* bval_add(bval* parent, bval* child);
