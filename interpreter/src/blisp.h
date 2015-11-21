@@ -65,6 +65,9 @@ void bval_print(bval* v);
 void bval_println(bval* v);
 void bval_expr_print(bval* v, char open, char close);
 
+bval* builtin_op(benv* e, bval* v, char* op);
+bval* builtin_def(benv* e, bval* a);
+
 bval* builtin_head(benv* e, bval* a);
 bval* builtin_tail(benv* e, bval* a);
 bval* builtin_eval(benv* e, bval* a);
@@ -74,7 +77,6 @@ bval* builtin_cons(benv* e, bval* a);
 bval* builtin_init(benv* e, bval* a);
 bval* builtin_len(benv* e, bval* a);
 
-bval* builtin_op(benv* e, bval* v, char* op);
 bval* builtin_add(benv* e, bval* a);
 bval* builtin_sub(benv* e, bval* a);
 bval* builtin_mul(benv* e, bval* a);

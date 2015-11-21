@@ -1,12 +1,34 @@
 #define ASSERT(arg, cond, m) \
   if (!(cond)) { bval_del(arg); return bval_err(m); }
 
-
 bval* builtin_add(benv* e, bval* a) { return builtin_op(e, a, "+"); }
 bval* builtin_sub(benv* e, bval* a) { return builtin_op(e, a, "-"); }
 bval* builtin_mul(benv* e, bval* a) { return builtin_op(e, a, "*"); }
 bval* builtin_div(benv* e, bval* a) { return builtin_op(e, a, "/"); }
 bval* builtin_mod(benv* e, bval* a) { return builtin_op(e, a, "%"); }
+
+bval* builtin_def(benv* e, bval* a) {
+  ASSERT(a, a->cell[0]->type == BVAL_QEXPR,
+    "Function 'def' passed incorrect type!");
+
+  bval* syms = a->cell[0];
+
+  for (int i = 0; i < syms->count; i++) {
+    ASSERT(a, syms->cell[i]->type == BVAL_SYM,
+      "Function 'def' cannot define non-symbol!");
+  }
+
+  ASSERT(a, syms->count == a->count - 1,
+    "Function 'def' must have symbol for each value!");
+
+  for (int i = 0; i < syms->count; i++) {
+    benv_put(e, syms->cell[i], a->cell[i + 1]);
+  }
+
+  bval_del(a);
+
+  return bval_sexpr();
+}
 
 
 bval* builtin_cons(benv* e, bval* a) {

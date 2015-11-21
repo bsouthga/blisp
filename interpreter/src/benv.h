@@ -64,12 +64,14 @@ void benv_add_builtins(benv* e) {
   // list methods
   benv_add_builtin(e, "list", builtin_list);
   benv_add_builtin(e, "cons", builtin_cons);
-  benv_add_builtin(e, "len", builtin_len);
+  benv_add_builtin(e, "len",  builtin_len);
   benv_add_builtin(e, "head", builtin_head);
   benv_add_builtin(e, "tail", builtin_tail);
   benv_add_builtin(e, "init", builtin_init);
   benv_add_builtin(e, "eval", builtin_eval);
   benv_add_builtin(e, "join", builtin_join);
+
+  benv_add_builtin(e, "def", builtin_def);
 
   // math methods
   benv_add_builtin(e, "+", builtin_add);
