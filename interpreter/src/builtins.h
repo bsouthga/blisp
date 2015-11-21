@@ -1,4 +1,18 @@
 
+/**
+ * Error reporting macros
+ */
+#define ASSERT_QEXPR_ARG(a, index, name) \
+  ASSERT(a, a->cell[index]->type == BVAL_QEXPR, \
+    "Function '%s' needs q-expression as argument %fi!", name, index + 1);
+
+#define ASSERT_ARG_LEN(a, len, name) \
+  ASSERT(a, a->count == len, "Function '%s' requires %fi arguments!", name, len);
+
+#define ASSERT_NOT_EMPTY(a, name) \
+  ASSERT(a, a->cell[0]->count != 0, "Function '%s' passed empty list!", name);
+
+
 // math builtins
 bval* builtin_add(benv* e, bval* a) { return builtin_op(e, a, "+"); }
 bval* builtin_sub(benv* e, bval* a) { return builtin_op(e, a, "-"); }
@@ -8,8 +22,7 @@ bval* builtin_mod(benv* e, bval* a) { return builtin_op(e, a, "%"); }
 
 
 bval* builtin_def(benv* e, bval* a) {
-  ASSERT(a, a->cell[0]->type == BVAL_QEXPR,
-    "Function 'def' passed incorrect type!");
+  ASSERT_QEXPR_ARG(a, 0, "def");
 
   bval* syms = a->cell[0];
 
@@ -32,8 +45,8 @@ bval* builtin_def(benv* e, bval* a) {
 
 
 bval* builtin_cons(benv* e, bval* a) {
-  ASSERT(a, a->count == 2, "Function 'cons' requires 2 arguments!");
-  ASSERT(a, a->cell[1]->type == BVAL_QEXPR, "Function 'cons' passed incorrect type as second argument!");
+  ASSERT_ARG_LEN(a, 2, "cons");
+  ASSERT_QEXPR_ARG(a, 2, "cons");
 
   // create a new q expression with the first arg of cons
   // as its first element
@@ -48,9 +61,9 @@ bval* builtin_cons(benv* e, bval* a) {
 
 
 bval* builtin_init(benv* e, bval* a) {
-  ASSERT(a, a->count == 1, "Function 'init' passed too may arguments");
-  ASSERT(a, a->cell[0]->type == BVAL_QEXPR, "Function 'init' passed incorrect type!");
-  ASSERT(a, a->cell[0]->count != 0, "Function 'init' passed empty list!");
+  ASSERT_ARG_LEN(a, 1, "init");
+  ASSERT_QEXPR_ARG(a, 0, "init");
+  ASSERT_NOT_EMPTY(a, "init");
 
   bval* v = bval_take(a, 0);
   bval_del(bval_pop(v, v->count - 1));
@@ -59,8 +72,8 @@ bval* builtin_init(benv* e, bval* a) {
 
 
 bval* builtin_len(benv* e, bval* a) {
-  ASSERT(a, a->count == 1, "Function 'len' passed too may arguments");
-  ASSERT(a, a->cell[0]->type == BVAL_QEXPR, "Function 'len' passed incorrect type!");
+  ASSERT_ARG_LEN(a, 1, "len");
+  ASSERT_QEXPR_ARG(a, 0, "len");
 
   bval* v = bval_num((double) a->cell[0]->count);
   bval_del(a);
@@ -69,9 +82,9 @@ bval* builtin_len(benv* e, bval* a) {
 
 
 bval* builtin_head(benv* e, bval* a) {
-  ASSERT(a, a->count == 1, "Function 'head' passed too may arguments");
-  ASSERT(a, a->cell[0]->type == BVAL_QEXPR, "Function 'head' passed incorrect type!");
-  ASSERT(a, a->cell[0]->count != 0, "Function 'head' passed empty list!");
+  ASSERT_ARG_LEN(a, 1, "head");
+  ASSERT_QEXPR_ARG(a, 0, "head");
+  ASSERT_NOT_EMPTY(a, "head");
 
   bval* v = bval_take(a, 0);
   // delete remaining elements
@@ -81,9 +94,9 @@ bval* builtin_head(benv* e, bval* a) {
 
 
 bval* builtin_tail(benv* e, bval* a) {
-  ASSERT(a, a->count == 1, "Function 'tail' passed too may arguments");
-  ASSERT(a, a->cell[0]->type == BVAL_QEXPR, "Function 'tail' passed incorrect type!");
-  ASSERT(a, a->cell[0]->count != 0, "Function 'tail' passed empty list!");
+  ASSERT_ARG_LEN(a, 1, "tail");
+  ASSERT_QEXPR_ARG(a, 0, "tail");
+  ASSERT_NOT_EMPTY(a, "tail");
 
   bval* v = bval_take(a, 0);
   bval_del(bval_pop(v, 0));
@@ -98,8 +111,8 @@ bval* builtin_list(benv* e, bval* a) {
 
 
 bval* builtin_eval(benv* e, bval* a) {
-  ASSERT(a, a->count == 1, "Function 'eval' passed too may arguments");
-  ASSERT(a, a->cell[0]->type == BVAL_QEXPR, "Function 'eval' passed incorrect type!");
+  ASSERT_ARG_LEN(a, 1, "eval");
+  ASSERT_QEXPR_ARG(a, 0, "eval");
 
   bval* x = bval_take(a, 0);
   x->type = BVAL_SEXPR;
@@ -109,7 +122,7 @@ bval* builtin_eval(benv* e, bval* a) {
 
 bval* builtin_join(benv* e, bval* a) {
   for (int i = 0; i < a->count; i++) {
-    ASSERT(a, a->cell[i]->type == BVAL_QEXPR, "Function 'eval' passed incorrect type!");
+    ASSERT_QEXPR_ARG(a, i, "join");
   }
 
   bval* x = bval_pop(a, 0);
