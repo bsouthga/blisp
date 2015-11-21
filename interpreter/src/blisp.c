@@ -1,5 +1,6 @@
 #include "blisp.h"
 #include "bval.h"
+#include "benv.h"
 #include "builtins.h"
 
 int main(int argc, char** argv) {
@@ -15,15 +16,7 @@ int main(int argc, char** argv) {
   mpca_lang(MPCA_LANG_DEFAULT,
     "\
         number   : /-?[0-9]+(\\.[0-9]+)?/                   ;\
-        symbol   : \"list\" | \
-                   \"head\" | \
-                   \"tail\" | \
-                   \"join\" | \
-                   \"eval\" | \
-                   \"cons\" | \
-                   \"len\"  | \
-                   \"init\" | \
-                   '+' | '-' | '*' | '/' | '%'              ;\
+        symbol   : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&%]/         ;\
         sexpr    : '(' <expr>* ')'                          ;\
         qexpr    : '{' <expr>* '}'                          ;\
         expr     : <number> | <symbol> | <sexpr> | <qexpr>  ;\
@@ -34,6 +27,9 @@ int main(int argc, char** argv) {
   puts("blisp version 0.0.1");
   puts("press ^C to Exit\n");
 
+  benv* e = benv_new();
+  benv_add_builtins(e);
+
   while(1) {
     mpc_result_t r;
     char* input;
@@ -43,10 +39,12 @@ int main(int argc, char** argv) {
     add_history(input);
 
     if (mpc_parse("<stdin>", input, Blisp, &r)) {
+
       // print the AST if valid
-      bval* v = bval_eval(bval_read(r.output));
+      bval* v = bval_eval(e, bval_read(r.output));
       bval_println(v);
       bval_del(v);
+
       mpc_ast_delete(r.output);
     } else {
       mpc_err_print(r.error);
@@ -56,6 +54,8 @@ int main(int argc, char** argv) {
     // free up input
     free(input);
   }
+
+  benv_del(e);
 
   // delete parsers
   mpc_cleanup(6, Number, Symbol, Sexpr, Qexpr, Expr, Blisp);

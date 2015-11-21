@@ -36,6 +36,12 @@ bval* bval_qexpr(void) {
   v->cell = NULL;
   return v;
 }
+bval* bval_fun(bbuiltin fn) {
+  bval* v = malloc(sizeof(bval));
+  v->type = BVAL_FUN;
+  v->fun = fn;
+  return v;
+}
 
 
 bval* bval_take(bval* v, int i) {
@@ -75,6 +81,7 @@ bval* bval_join(bval* x, bval* y) {
 void bval_del(bval* v) {
 
   switch (v->type) {
+    case BVAL_FUN: break;
     case BVAL_NUM: break; // no property pointers for BVAL_NUM
     case BVAL_ERR: free(v->err); break;
     case BVAL_SYM: free(v->sym); break;
@@ -152,16 +159,22 @@ bval* bval_read(mpc_ast_t* tree) {
 /**
  * Transform sexpr for evaluation
  */
-bval* bval_eval(bval* v) {
-  if (v->type == BVAL_SEXPR) return bval_eval_sexpr(v);
+bval* bval_eval(benv* e, bval* v) {
+  if (v->type == BVAL_SYM) {
+    bval* x = benv_get(e, v);
+    bval_del(v);
+    return x;
+  }
+
+  if (v->type == BVAL_SEXPR) return bval_eval_sexpr(e, v);
   return v;
 }
 
-bval* bval_eval_sexpr(bval* v) {
+bval* bval_eval_sexpr(benv* e, bval* v) {
 
   // eval children first
   for (int i = 0; i < v->count; i++) {
-    v->cell[i] = bval_eval(v->cell[i]);
+    v->cell[i] = bval_eval(e, v->cell[i]);
     if (v->cell[i]->type == BVAL_ERR) return bval_take(v, i);
   }
 
@@ -169,24 +182,56 @@ bval* bval_eval_sexpr(bval* v) {
   if (v->count == 1) return bval_take(v, 0);
 
   bval* f = bval_pop(v, 0);
-  if (f->type != BVAL_SYM) {
-    printf("Type is not symbol!");
+  if (f->type != BVAL_FUN) {
     bval_del(f);
     bval_del(v);
-    return bval_err("S-expression does not start with symbol!");
+    return bval_err("S-expression does not start with function!");
   }
 
-  // evaluate builtin function
-  bval* result = builtin(v, f->sym);
+  bval* result = f->fun(e, v);
   bval_del(f);
   return result;
 }
+
+
+bval* bval_copy(bval* v) {
+  bval* x = malloc(sizeof(bval));
+  x->type = v->type;
+
+  switch (v->type) {
+    case BVAL_FUN: x->fun = v->fun; break;
+    case BVAL_NUM: x->num = v->num; break;
+
+    case BVAL_ERR:
+      x->err = malloc(strlen(v->err) + 1);
+      strcpy(x->err, v->err);
+      break;
+
+    case BVAL_SYM:
+      x->sym = malloc(strlen(v->sym) + 1);
+      strcpy(x->sym, v->sym);
+      break;
+
+    case BVAL_SEXPR:
+    case BVAL_QEXPR:
+      x->count = v->count;
+      x->cell = malloc(sizeof(bval*) * x->count);
+      for (int i = 0; i < x->count; i++) {
+        x->cell[i] = bval_copy(v->cell[i]);
+      }
+      break;
+  }
+
+  return x;
+}
+
 
 /**
  * Printing
  */
 void bval_print(bval* v) {
   switch (v->type) {
+    case BVAL_FUN:   printf("<function>");         break;
     case BVAL_NUM:   printf("%lf", v->num);        break;
     case BVAL_ERR:   printf("Error: %s", v->err);  break;
     case BVAL_SYM:   printf("%s", v->sym);         break;
@@ -194,10 +239,12 @@ void bval_print(bval* v) {
     case BVAL_QEXPR: bval_expr_print(v, '{', '}'); break;
   }
 }
+
 void bval_println(bval* v) {
   bval_print(v);
   putchar('\n');
 }
+
 void bval_expr_print(bval* v, char open, char close) {
   putchar(open);
   for (int i = 0; i < v->count; i++) {

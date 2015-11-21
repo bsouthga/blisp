@@ -2,23 +2,14 @@
   if (!(cond)) { bval_del(arg); return bval_err(m); }
 
 
-bval* builtin(bval* a, char* fn) {
-  if (strcmp("list",  fn) == 0) return builtin_list(a);
-  if (strcmp("head",  fn) == 0) return builtin_head(a);
-  if (strcmp("tail",  fn) == 0) return builtin_tail(a);
-  if (strcmp("join",  fn) == 0) return builtin_join(a);
-  if (strcmp("eval",  fn) == 0) return builtin_eval(a);
-  if (strcmp("cons",  fn) == 0) return builtin_cons(a);
-  if (strcmp("len",   fn) == 0) return builtin_len(a);
-  if (strcmp("init",  fn) == 0) return builtin_init(a);
-  if (strstr("+/*-%", fn))      return builtin_op(a, fn);
-
-  bval_del(a);
-  return bval_err("Unknown function!");
-}
+bval* builtin_add(benv* e, bval* a) { return builtin_op(e, a, "+"); }
+bval* builtin_sub(benv* e, bval* a) { return builtin_op(e, a, "-"); }
+bval* builtin_mul(benv* e, bval* a) { return builtin_op(e, a, "*"); }
+bval* builtin_div(benv* e, bval* a) { return builtin_op(e, a, "/"); }
+bval* builtin_mod(benv* e, bval* a) { return builtin_op(e, a, "%"); }
 
 
-bval* builtin_cons(bval* a) {
+bval* builtin_cons(benv* e, bval* a) {
   ASSERT(a, a->count == 2, "Function 'cons' requires 2 arguments!");
   ASSERT(a, a->cell[1]->type == BVAL_QEXPR, "Function 'cons' passed incorrect type as second argument!");
 
@@ -34,7 +25,7 @@ bval* builtin_cons(bval* a) {
 }
 
 
-bval* builtin_init(bval* a) {
+bval* builtin_init(benv* e, bval* a) {
   ASSERT(a, a->count == 1, "Function 'init' passed too may arguments");
   ASSERT(a, a->cell[0]->type == BVAL_QEXPR, "Function 'init' passed incorrect type!");
   ASSERT(a, a->cell[0]->count != 0, "Function 'init' passed empty list!");
@@ -45,7 +36,7 @@ bval* builtin_init(bval* a) {
 }
 
 
-bval* builtin_len(bval* a) {
+bval* builtin_len(benv* e, bval* a) {
   ASSERT(a, a->count == 1, "Function 'len' passed too may arguments");
   ASSERT(a, a->cell[0]->type == BVAL_QEXPR, "Function 'len' passed incorrect type!");
 
@@ -55,7 +46,7 @@ bval* builtin_len(bval* a) {
 }
 
 
-bval* builtin_head(bval* a) {
+bval* builtin_head(benv* e, bval* a) {
   ASSERT(a, a->count == 1, "Function 'head' passed too may arguments");
   ASSERT(a, a->cell[0]->type == BVAL_QEXPR, "Function 'head' passed incorrect type!");
   ASSERT(a, a->cell[0]->count != 0, "Function 'head' passed empty list!");
@@ -67,7 +58,7 @@ bval* builtin_head(bval* a) {
 }
 
 
-bval* builtin_tail(bval* a) {
+bval* builtin_tail(benv* e, bval* a) {
   ASSERT(a, a->count == 1, "Function 'tail' passed too may arguments");
   ASSERT(a, a->cell[0]->type == BVAL_QEXPR, "Function 'tail' passed incorrect type!");
   ASSERT(a, a->cell[0]->count != 0, "Function 'tail' passed empty list!");
@@ -78,23 +69,23 @@ bval* builtin_tail(bval* a) {
 }
 
 
-bval* builtin_list(bval* a) {
+bval* builtin_list(benv* e, bval* a) {
   a->type = BVAL_QEXPR;
   return a;
 }
 
 
-bval* builtin_eval(bval* a) {
+bval* builtin_eval(benv* e, bval* a) {
   ASSERT(a, a->count == 1, "Function 'eval' passed too may arguments");
   ASSERT(a, a->cell[0]->type == BVAL_QEXPR, "Function 'eval' passed incorrect type!");
 
   bval* x = bval_take(a, 0);
   x->type = BVAL_SEXPR;
-  return bval_eval(x);
+  return bval_eval(e, x);
 }
 
 
-bval* builtin_join(bval* a) {
+bval* builtin_join(benv* e, bval* a) {
   for (int i = 0; i < a->count; i++) {
     ASSERT(a, a->cell[i]->type == BVAL_QEXPR, "Function 'eval' passed incorrect type!");
   }
@@ -108,7 +99,7 @@ bval* builtin_join(bval* a) {
 }
 
 
-bval* builtin_op(bval* v, char* op) {
+bval* builtin_op(benv* e, bval* v, char* op) {
 
   // currently can only accept number atoms
   for (int i = 0; i < v->count; i++) {
