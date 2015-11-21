@@ -25,7 +25,7 @@ bval* benv_get(benv* e, bval* k) {
       return bval_copy(e->vals[i]);
     }
   }
-  return bval_err("Unbound symbol!");
+  return bval_err("Unbound symbol '%s'", k->sym);
 }
 
 

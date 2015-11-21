@@ -7,13 +7,6 @@ bval* bval_num(double num) {
   v->num = num;
   return v;
 }
-bval* bval_err(char* err) {
-  bval* v = malloc(sizeof(bval));
-  v->type = BVAL_ERR;
-  v->err = malloc(strlen(err) + 1);
-  strcpy(v->err, err);
-  return v;
-}
 bval* bval_sym(char* sym) {
   bval* v = malloc(sizeof(bval));
   v->type = BVAL_SYM;
@@ -43,6 +36,27 @@ bval* bval_fun(bbuiltin fn) {
   return v;
 }
 
+// veriadic error message function
+bval* bval_err(char* fmt, ...) {
+  bval* v = malloc(sizeof(bval));
+  v->type = BVAL_ERR;
+
+  // create varargs list
+  va_list va;
+  va_start(va, fmt);
+
+  v->err = malloc(512);
+
+  // printf with fmt and arguments
+  vsnprintf(v->err, 511, fmt, va);
+
+  // shrink error memory to size used
+  v->err = realloc(v->err, strlen(v->err) + 1);
+
+  va_end(va);
+
+  return v;
+}
 
 bval* bval_take(bval* v, int i) {
   bval* x = bval_pop(v, i);

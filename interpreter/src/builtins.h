@@ -1,11 +1,11 @@
-#define ASSERT(arg, cond, m) \
-  if (!(cond)) { bval_del(arg); return bval_err(m); }
 
+// math builtins
 bval* builtin_add(benv* e, bval* a) { return builtin_op(e, a, "+"); }
 bval* builtin_sub(benv* e, bval* a) { return builtin_op(e, a, "-"); }
 bval* builtin_mul(benv* e, bval* a) { return builtin_op(e, a, "*"); }
 bval* builtin_div(benv* e, bval* a) { return builtin_op(e, a, "/"); }
 bval* builtin_mod(benv* e, bval* a) { return builtin_op(e, a, "%"); }
+
 
 bval* builtin_def(benv* e, bval* a) {
   ASSERT(a, a->cell[0]->type == BVAL_QEXPR,

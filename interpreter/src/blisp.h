@@ -3,6 +3,16 @@
 #include <editline/readline.h>
 #include "mpc.h"
 
+
+// veriadic macro
+#define ASSERT(arg, cond, fmt, ...) \
+  if (!(cond)) { \
+    bval* err = bval_err(fmt, ##__VA_ARGS__); \
+    bval_del(arg); \
+    return err; \
+  }
+
+
 struct bval;
 struct benv;
 typedef struct bval bval;
@@ -48,7 +58,7 @@ void benv_add_builtins(benv* e);
 
 // forward declare functions
 bval* bval_num(double num);
-bval* bval_err(char* err);
+bval* bval_err(char* fmt, ...);
 bval* bval_sym(char* sym);
 bval* bval_sexpr(void);
 bval* bval_qexpr(void);
