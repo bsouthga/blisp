@@ -36,6 +36,7 @@ struct bval {
 
   char* err;
   char* sym;
+  char* str;
   double num;
 
   bbuiltin builtin;
@@ -53,7 +54,8 @@ enum {
   BVAL_SEXPR,
   BVAL_QEXPR,
   BVAL_FUN,
-  BVAL_SYM
+  BVAL_SYM,
+  BVAL_STR
 };
 
 benv* benv_new(void);
@@ -68,6 +70,7 @@ void benv_def(benv* e, bval* k, bval* v);
 bval* bval_num(double num);
 bval* bval_err(char* fmt, ...);
 bval* bval_sym(char* sym);
+bval* bval_str(char* str);
 bval* bval_sexpr(void);
 bval* bval_qexpr(void);
 bval* bval_fun(bbuiltin fn, char* name);
@@ -75,6 +78,8 @@ bval* bval_lambda(bval* formals, bval* body);
 
 bval* bval_read(mpc_ast_t* tree);
 bval* bval_read_num(mpc_ast_t* tree);
+bval* bval_read_str(mpc_ast_t* tree);
+
 bval* bval_add(bval* parent, bval* child);
 bval* bval_eval(benv* e, bval* v);
 bval* bval_take(bval* v, int i);
@@ -83,11 +88,14 @@ bval* bval_join(bval* x, bval* y);
 bval* bval_eval_sexpr(benv* e, bval* v);
 bval* bval_call(benv* e, bval* f, bval* a);
 bval* bval_copy(bval* v);
+
 int bval_eq(bval* x, bval* y);
+
 void bval_del(bval* v);
 void bval_print(bval* v);
 void bval_println(bval* v);
 void bval_expr_print(bval* v, char open, char close);
+void bval_str_print(bval* v);
 
 char* btype_name(int type);
 
@@ -98,6 +106,7 @@ bval* builtin_let(benv* e, bval* a);
 bval* builtin_lambda(benv* e, bval* a);
 bval* builtin_var(benv* e, bval* a, char* fn);
 bval* builtin_cmp(benv* e, bval* a, char* op);
+bval* builtin_type(benv* e, bval* a);
 
 bval* builtin_head(benv* e, bval* a);
 bval* builtin_tail(benv* e, bval* a);

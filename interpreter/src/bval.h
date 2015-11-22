@@ -48,6 +48,14 @@ bval* bval_lambda(bval* formals, bval* body) {
   v->body = body;
   return v;
 }
+bval* bval_str(char* str) {
+  bval* v = malloc(sizeof(bval));
+  v->type = BVAL_STR;
+  v->str = malloc(strlen(str) + 1);
+  strcpy(v->str, str);
+  return v;
+}
+
 
 // veriadic error message function
 bval* bval_err(char* fmt, ...) {
@@ -202,6 +210,7 @@ void bval_del(bval* v) {
     case BVAL_NUM: break; // no property pointers for BVAL_NUM
     case BVAL_ERR: free(v->err); break;
     case BVAL_SYM: free(v->sym); break;
+    case BVAL_STR: free(v->str); break;
 
     case BVAL_QEXPR:
     case BVAL_SEXPR:
@@ -249,6 +258,25 @@ bval* bval_add(bval* parent, bval* child) {
 }
 
 
+bval* bval_read_str(mpc_ast_t* tree) {
+  // remove final quote character by adding null terminator
+  tree->contents[strlen(tree->contents) - 1] = '\0';
+
+  // starting at character after first quote...
+  char* unescaped = malloc(strlen(tree->contents + 1) + 1);
+
+  // pointer arithmetic to copy starting a first non quote char
+  strcpy(unescaped, tree->contents + 1);
+
+  unescaped = mpcf_unescape(unescaped);
+
+  bval* str = bval_str(unescaped);
+  free(unescaped);
+  return str;
+}
+
+
+
 /**
  * Read ast into bvals
  */
@@ -256,8 +284,7 @@ bval* bval_read(mpc_ast_t* tree) {
 
   if (strstr(tree->tag, "number")) return bval_read_num(tree);
   if (strstr(tree->tag, "symbol")) return bval_sym(tree->contents);
-
-
+  if (strstr(tree->tag, "string")) return bval_read_str(tree);
 
   // if we're at the root of the AST (the prompt) -> return void expr;
   bval* x = NULL;
@@ -290,6 +317,7 @@ int bval_eq(bval* x, bval* y) {
     case BVAL_NUM: return x->num == y->num;
     case BVAL_ERR: return (strcmp(x->err, y->err) == 0);
     case BVAL_SYM: return (strcmp(x->sym, y->sym) == 0);
+    case BVAL_STR: return (strcmp(x->str, y->str) == 0);
 
     case BVAL_FUN:
       if (x->builtin || y->builtin) {
@@ -387,6 +415,11 @@ bval* bval_copy(bval* v) {
       strcpy(x->sym, v->sym);
       break;
 
+    case BVAL_STR:
+      x->str = malloc(strlen(v->str) + 1);
+      strcpy(x->str, v->str);
+      break;
+
     case BVAL_SEXPR:
     case BVAL_QEXPR:
       x->count = v->count;
@@ -422,13 +455,16 @@ void bval_print(bval* v) {
     case BVAL_SYM:   printf("%s", v->sym);              break;
     case BVAL_SEXPR: bval_expr_print(v, '(', ')');      break;
     case BVAL_QEXPR: bval_expr_print(v, '{', '}');      break;
+    case BVAL_STR:   bval_str_print(v);                 break;
   }
 }
+
 
 void bval_println(bval* v) {
   bval_print(v);
   putchar('\n');
 }
+
 
 void bval_expr_print(bval* v, char open, char close) {
   putchar(open);
@@ -440,12 +476,22 @@ void bval_expr_print(bval* v, char open, char close) {
 }
 
 
+void bval_str_print(bval* v) {
+  char* escaped = malloc(strlen(v->str) + 1);
+  strcpy(escaped, v->str);
+  escaped = mpcf_escape(escaped); // mpc escape function
+  printf("\"%s\"", escaped);
+  free(escaped);
+}
+
+
 char* btype_name(int type) {
   switch (type) {
     case BVAL_FUN:   return "Function";
     case BVAL_NUM:   return "Number";
     case BVAL_ERR:   return "Error";
     case BVAL_SYM:   return "Symbol";
+    case BVAL_STR:   return "String";
     case BVAL_SEXPR: return "S-Expression";
     case BVAL_QEXPR: return "Q-Expression";
   }

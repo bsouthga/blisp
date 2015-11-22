@@ -100,6 +100,16 @@ bval* builtin_lambda(benv* e, bval* a) {
 }
 
 
+bval* builtin_type(benv* e, bval* a) {
+  ASSERT_ARG_LEN(a, 1, "type");
+  bval* x = bval_pop(a, 0);
+  bval* r = bval_str(btype_name(x->type));
+  bval_del(x);
+  bval_del(a);
+  return r;
+}
+
+
 bval* builtin_cons(benv* e, bval* a) {
   ASSERT_ARG_LEN(a, 2, "cons");
   ASSERT_ARG_TYPE(a, 1, BVAL_QEXPR, "cons");

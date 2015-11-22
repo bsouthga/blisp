@@ -103,6 +103,7 @@ void benv_add_builtins(benv* e) {
   benv_add_builtin(e, "def", builtin_def);
   benv_add_builtin(e, "let", builtin_let);
   benv_add_builtin(e, "\\",  builtin_lambda);
+  benv_add_builtin(e, "type", builtin_type);
 
   // math methods
   benv_add_builtin(e, "+", builtin_add);
