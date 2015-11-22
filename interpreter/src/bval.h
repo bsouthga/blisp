@@ -29,10 +29,23 @@ bval* bval_qexpr(void) {
   v->cell = NULL;
   return v;
 }
-bval* bval_fun(bbuiltin fn) {
+bval* bval_fun(bbuiltin fn, char* name) {
   bval* v = malloc(sizeof(bval));
   v->type = BVAL_FUN;
-  v->fun = fn;
+  v->builtin = fn;
+  v->sym = name;
+  return v;
+}
+bval* bval_lambda(bval* formals, bval* body) {
+  bval* v = malloc(sizeof(bval));
+  v->type = BVAL_FUN;
+  v->builtin = NULL;
+
+  // new scope for function
+  v->env = benv_new();
+
+  v->formals = formals;
+  v->body = body;
   return v;
 }
 
@@ -90,12 +103,62 @@ bval* bval_join(bval* x, bval* y) {
 
 
 /**
+ * Call a function in an environment, with arguments
+ */
+bval* bval_call(benv* e, bval* f, bval* a) {
+  if (f->builtin) return f->builtin(e, a);
+
+  int given = a->count;
+  int total = f->formals->count;
+
+  while (a->count) {
+
+    if (f->formals->count == 0) {
+      bval_del(a);
+      return bval_err(
+        "Function passed too many arguments. "
+        "Expected %i, Got %i.",
+        total, given
+      );
+    }
+
+    bval* sym = bval_pop(f->formals, 0);
+    bval* val = bval_pop(a, 0);
+
+    // bind a copy of the val to the functions environment
+    benv_put(f->env, sym, val);
+
+    bval_del(sym);
+    bval_del(val);
+  }
+
+  bval_del(a);
+
+  // if all the functions parameters have been bound to arguments,
+  // evaluate the function and return a result
+  if (f->formals->count == 0) {
+
+    f->env->parent = e;
+
+    // evaluate the body of the function
+    return builtin_eval(f->env,
+      // copy the q-expression representing the function body into an s-expression,
+      // using the environment of the function as context (with the newly found variables)
+      bval_add(bval_sexpr(), bval_copy(f->body))
+    );
+  } else {
+    // otherwise... curry the function
+    return bval_copy(f);
+  }
+}
+
+
+/**
  * blisp AST node destructor
  */
 void bval_del(bval* v) {
 
   switch (v->type) {
-    case BVAL_FUN: break;
     case BVAL_NUM: break; // no property pointers for BVAL_NUM
     case BVAL_ERR: free(v->err); break;
     case BVAL_SYM: free(v->sym); break;
@@ -107,6 +170,14 @@ void bval_del(bval* v) {
         bval_del(v->cell[i]);
       }
       free(v->cell);
+      break;
+
+    case BVAL_FUN:
+      if (!v->builtin) {
+        benv_del(v->env);
+        bval_del(v->formals);
+        bval_del(v->body);
+      }
       break;
   }
 
@@ -197,12 +268,17 @@ bval* bval_eval_sexpr(benv* e, bval* v) {
 
   bval* f = bval_pop(v, 0);
   if (f->type != BVAL_FUN) {
+    bval* err = bval_err(
+      "S-expression starts with incorrect type!"
+      "Given type %s, Expected type %s",
+      btype_name(f->type), btype_name(BVAL_FUN)
+    );
     bval_del(f);
     bval_del(v);
-    return bval_err("S-expression does not start with function!");
+    return err;
   }
 
-  bval* result = f->fun(e, v);
+  bval* result = bval_call(e, f, v);
   bval_del(f);
   return result;
 }
@@ -213,7 +289,18 @@ bval* bval_copy(bval* v) {
   x->type = v->type;
 
   switch (v->type) {
-    case BVAL_FUN: x->fun = v->fun; break;
+    case BVAL_FUN:
+      if (v->builtin) {
+        x->sym = v->sym;
+        x->builtin = v->builtin;
+      } else {
+        x->builtin = NULL;
+        x->env = benv_copy(v->env);
+        x->formals = bval_copy(v->formals);
+        x->body = bval_copy(v->body);
+      }
+      break;
+
     case BVAL_NUM: x->num = v->num; break;
 
     case BVAL_ERR:
@@ -245,12 +332,22 @@ bval* bval_copy(bval* v) {
  */
 void bval_print(bval* v) {
   switch (v->type) {
-    case BVAL_FUN:   printf("<function>");         break;
-    case BVAL_NUM:   printf("%lf", v->num);        break;
-    case BVAL_ERR:   printf("Error: %s", v->err);  break;
-    case BVAL_SYM:   printf("%s", v->sym);         break;
-    case BVAL_SEXPR: bval_expr_print(v, '(', ')'); break;
-    case BVAL_QEXPR: bval_expr_print(v, '{', '}'); break;
+    case BVAL_FUN:
+      if (v->builtin) {
+        printf("<builtin: %s >", v->sym);
+      } else {
+        printf("(\\ ");
+        bval_print(v->formals);
+        putchar(' ');
+        bval_print(v->body);
+        putchar(')');
+      }
+      break;
+    case BVAL_NUM:   printf("%lf", v->num);             break;
+    case BVAL_ERR:   printf("Error: %s", v->err);       break;
+    case BVAL_SYM:   printf("%s", v->sym);              break;
+    case BVAL_SEXPR: bval_expr_print(v, '(', ')');      break;
+    case BVAL_QEXPR: bval_expr_print(v, '{', '}');      break;
   }
 }
 
@@ -266,4 +363,17 @@ void bval_expr_print(bval* v, char open, char close) {
     if (i != (v->count - 1)) putchar(' ');
   }
   putchar(close);
+}
+
+
+char* btype_name(int type) {
+  switch (type) {
+    case BVAL_FUN:   return "Function";
+    case BVAL_NUM:   return "Number";
+    case BVAL_ERR:   return "Error";
+    case BVAL_SYM:   return "Symbol";
+    case BVAL_SEXPR: return "S-Expression";
+    case BVAL_QEXPR: return "Q-Expression";
+  }
+  return "Invalid";
 }

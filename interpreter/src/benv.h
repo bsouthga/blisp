@@ -1,6 +1,7 @@
 benv* benv_new(void) {
   benv* e = malloc(sizeof(benv));
   e->count = 0;
+  e->parent = NULL;
   e->syms = NULL;
   e->vals = NULL;
   return e;
@@ -25,7 +26,36 @@ bval* benv_get(benv* e, bval* k) {
       return bval_copy(e->vals[i]);
     }
   }
-  return bval_err("Unbound symbol '%s'", k->sym);
+
+  // look in parent scope
+  if (e->parent) {
+    return benv_get(e->parent, k);
+  } else {
+    return bval_err("Unbound symbol '%s'", k->sym);
+  }
+}
+
+
+benv* benv_copy(benv* e) {
+  benv* n = malloc(sizeof(benv));
+
+  n->parent = e->parent;
+  n->count = e->count;
+  n->syms = malloc(sizeof(char*) * n->count);
+  n->vals = malloc(sizeof(char*) * n->count);
+
+  for (int i = 0; i < e->count; i++) {
+    n->syms[i] = malloc(strlen(e->syms[i]) + 1);
+    strcpy(n->syms[i], e->syms[i]);
+    n->vals[i] = bval_copy(e->vals[i]);
+  }
+
+  return n;
+}
+
+void benv_def(benv* e, bval* k, bval* v) {
+  while(e->parent) e = e->parent;
+  benv_put(e, k, v);
 }
 
 
@@ -52,7 +82,7 @@ void benv_put(benv* e, bval* k, bval* v) {
 
 void benv_add_builtin(benv* e, char* name, bbuiltin fn) {
   bval* k = bval_sym(name);
-  bval* v = bval_fun(fn);
+  bval* v = bval_fun(fn, name);
   benv_put(e, k, v);
   bval_del(k);
   bval_del(v);
@@ -72,6 +102,8 @@ void benv_add_builtins(benv* e) {
   benv_add_builtin(e, "join", builtin_join);
 
   benv_add_builtin(e, "def", builtin_def);
+  benv_add_builtin(e, "let", builtin_let);
+  benv_add_builtin(e, "\\",  builtin_lambda);
 
   // math methods
   benv_add_builtin(e, "+", builtin_add);

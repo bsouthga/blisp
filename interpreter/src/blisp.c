@@ -42,6 +42,7 @@ int main(int argc, char** argv) {
 
       // print the AST if valid
       bval* v = bval_eval(e, bval_read(r.output));
+
       bval_println(v);
       bval_del(v);
 

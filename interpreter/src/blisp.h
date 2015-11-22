@@ -23,19 +23,26 @@ typedef bval*(*bbuiltin)(benv*, bval*);
 
 // environment
 struct benv {
+  benv* parent;
   int count;
   char** syms;
   bval** vals;
 };
 
-// blisp AST node
+// blisp value
 struct bval {
   int type;
   int count;
+
   char* err;
   char* sym;
   double num;
-  bbuiltin fun;
+
+  bbuiltin builtin;
+  benv* env;
+  bval* formals;
+  bval* body;
+
   struct bval** cell;
 };
 
@@ -51,17 +58,21 @@ enum {
 
 benv* benv_new(void);
 bval* benv_get(benv* e, bval* k);
+benv* benv_copy(benv* e);
 void benv_put(benv* e, bval* k, bval* v);
 void benv_del(benv* e);
 void benv_add_builtin(benv* e, char* name, bbuiltin fn);
 void benv_add_builtins(benv* e);
+void benv_def(benv* e, bval* k, bval* v);
 
-// forward declare functions
 bval* bval_num(double num);
 bval* bval_err(char* fmt, ...);
 bval* bval_sym(char* sym);
 bval* bval_sexpr(void);
 bval* bval_qexpr(void);
+bval* bval_fun(bbuiltin fn, char* name);
+bval* bval_lambda(bval* formals, bval* body);
+
 bval* bval_read(mpc_ast_t* tree);
 bval* bval_read_num(mpc_ast_t* tree);
 bval* bval_add(bval* parent, bval* child);
@@ -70,13 +81,20 @@ bval* bval_take(bval* v, int i);
 bval* bval_pop(bval* v, int i);
 bval* bval_join(bval* x, bval* y);
 bval* bval_eval_sexpr(benv* e, bval* v);
+bval* bval_call(benv* e, bval* f, bval* a);
+bval* bval_copy(bval* v);
 void bval_del(bval* v);
 void bval_print(bval* v);
 void bval_println(bval* v);
 void bval_expr_print(bval* v, char open, char close);
 
+char* btype_name(int type);
+
 bval* builtin_op(benv* e, bval* v, char* op);
 bval* builtin_def(benv* e, bval* a);
+bval* builtin_let(benv* e, bval* a);
+bval* builtin_lambda(benv* e, bval* a);
+bval* builtin_var(benv* e, bval* a, char* fn);
 
 bval* builtin_head(benv* e, bval* a);
 bval* builtin_tail(benv* e, bval* a);

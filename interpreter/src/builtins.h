@@ -27,20 +27,39 @@ bval* builtin_mod(benv* e, bval* a) { return builtin_op(e, a, "%"); }
 
 
 bval* builtin_def(benv* e, bval* a) {
+  return builtin_var(e, a, "def");
+}
+
+bval* builtin_let(benv* e, bval* a) {
+  return builtin_var(e, a, "let");
+}
+
+
+bval* builtin_var(benv* e, bval* a, char* fn) {
   ASSERT_QEXPR_ARG(a, 0, "def");
 
   bval* syms = a->cell[0];
 
   for (int i = 0; i < syms->count; i++) {
     ASSERT(a, syms->cell[i]->type == BVAL_SYM,
-      "Function 'def' cannot define non-symbol!");
+      "Function '%s' cannot define non-symbol!"
+      "Got %s, Expected %s.", fn,
+      btype_name(syms->cell[i]->type),
+      btype_name(BVAL_SYM));
   }
 
   ASSERT(a, syms->count == a->count - 1,
-    "Function 'def' must have symbol for each value!");
+    "Function '%s' must have symbol for each value!"
+    "Got %i symbols, expected %i symbols.",
+    fn, syms->count, a->count - 1);
 
   for (int i = 0; i < syms->count; i++) {
-    benv_put(e, syms->cell[i], a->cell[i + 1]);
+    if (strcmp(fn, "def") == 0) {
+      benv_def(e, syms->cell[i], a->cell[i + 1]);
+    }
+    if (strcmp(fn, "let") == 0) {
+      benv_put(e, syms->cell[i], a->cell[i + 1]);
+    }
   }
 
   bval_del(a);
@@ -49,9 +68,31 @@ bval* builtin_def(benv* e, bval* a) {
 }
 
 
+bval* builtin_lambda(benv* e, bval* a) {
+  ASSERT_ARG_LEN(a, 2, "\\");
+  ASSERT_QEXPR_ARG(a, 0, "\\");
+  ASSERT_QEXPR_ARG(a, 1, "\\");
+
+  bval* arg_list = a->cell[0];
+
+  for (int i = 0; i < arg_list->count; i++) {
+    bval* arg = arg_list->cell[i];
+    ASSERT(a, (arg->type == BVAL_SYM),
+      "Cannot define non-symbol. Got %s, Expected %s.",
+      btype_name(arg->type), btype_name(BVAL_SYM));
+  }
+
+  bval* formals = bval_pop(a, 0);
+  bval* body = bval_pop(a, 0);
+  bval_del(a);
+
+  return bval_lambda(formals, body);
+}
+
+
 bval* builtin_cons(benv* e, bval* a) {
   ASSERT_ARG_LEN(a, 2, "cons");
-  ASSERT_QEXPR_ARG(a, 2, "cons");
+  ASSERT_QEXPR_ARG(a, 1, "cons");
 
   // create a new q expression with the first arg of cons
   // as its first element
