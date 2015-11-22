@@ -83,6 +83,7 @@ bval* bval_join(bval* x, bval* y);
 bval* bval_eval_sexpr(benv* e, bval* v);
 bval* bval_call(benv* e, bval* f, bval* a);
 bval* bval_copy(bval* v);
+int bval_eq(bval* x, bval* y);
 void bval_del(bval* v);
 void bval_print(bval* v);
 void bval_println(bval* v);
@@ -91,10 +92,12 @@ void bval_expr_print(bval* v, char open, char close);
 char* btype_name(int type);
 
 bval* builtin_op(benv* e, bval* v, char* op);
+bval* builtin_ord(benv* e, bval* v, char* op);
 bval* builtin_def(benv* e, bval* a);
 bval* builtin_let(benv* e, bval* a);
 bval* builtin_lambda(benv* e, bval* a);
 bval* builtin_var(benv* e, bval* a, char* fn);
+bval* builtin_cmp(benv* e, bval* a, char* op);
 
 bval* builtin_head(benv* e, bval* a);
 bval* builtin_tail(benv* e, bval* a);
@@ -110,3 +113,11 @@ bval* builtin_sub(benv* e, bval* a);
 bval* builtin_mul(benv* e, bval* a);
 bval* builtin_div(benv* e, bval* a);
 bval* builtin_mod(benv* e, bval* a);
+
+bval* builtin_if(benv* e, bval* a);
+bval* builtin_lt(benv* e, bval* a);
+bval* builtin_gt(benv* e, bval* a);
+bval* builtin_le(benv* e, bval* a);
+bval* builtin_ge(benv* e, bval* a);
+bval* builtin_eq(benv* e, bval* a);
+bval* builtin_ne(benv* e, bval* a);

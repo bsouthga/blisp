@@ -281,6 +281,40 @@ bval* bval_read(mpc_ast_t* tree) {
   return x;
 }
 
+
+int bval_eq(bval* x, bval* y) {
+
+  if (x->type != y->type) return 0;
+
+  switch (x->type) {
+    case BVAL_NUM: return x->num == y->num;
+    case BVAL_ERR: return (strcmp(x->err, y->err) == 0);
+    case BVAL_SYM: return (strcmp(x->sym, y->sym) == 0);
+
+    case BVAL_FUN:
+      if (x->builtin || y->builtin) {
+        return x->builtin == y->builtin;
+      } else {
+        return (
+          bval_eq(x->formals, y->formals) &&
+          bval_eq(x->body, y->body)
+        );
+      }
+
+    case BVAL_QEXPR:
+    case BVAL_SEXPR:
+      if (x->count != y->count) return 0;
+      for (int i = 0; i < x->count; i++) {
+        if (!bval_eq(x->cell[i], y->cell[i])) return 0;
+      }
+      return 1;
+  }
+
+  return 0;
+}
+
+
+
 /**
  * Transform sexpr for evaluation
  */

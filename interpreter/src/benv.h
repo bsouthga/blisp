@@ -90,7 +90,6 @@ void benv_add_builtin(benv* e, char* name, bbuiltin fn) {
 
 
 void benv_add_builtins(benv* e) {
-
   // list methods
   benv_add_builtin(e, "list", builtin_list);
   benv_add_builtin(e, "cons", builtin_cons);
@@ -111,4 +110,12 @@ void benv_add_builtins(benv* e) {
   benv_add_builtin(e, "*", builtin_mul);
   benv_add_builtin(e, "/", builtin_div);
   benv_add_builtin(e, "%", builtin_mod);
+
+  benv_add_builtin(e, "if", builtin_if);
+  benv_add_builtin(e, "<",  builtin_lt);
+  benv_add_builtin(e, ">",  builtin_gt);
+  benv_add_builtin(e, "<=", builtin_le);
+  benv_add_builtin(e, ">=", builtin_ge);
+  benv_add_builtin(e, "=",  builtin_eq);
+  benv_add_builtin(e, "!=", builtin_ne);
 }

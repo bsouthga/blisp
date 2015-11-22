@@ -1,11 +1,13 @@
-
 /**
  * Error reporting macros
  */
-#define ASSERT_QEXPR_ARG(a, index, name) \
-  ASSERT(a, a->cell[index]->type == BVAL_QEXPR, \
-    "Function '%s' needs q-expression as argument %i!", \
-    name, index);
+#define ASSERT_ARG_TYPE(a, index, arg_type, name) \
+  ASSERT(a, a->cell[index]->type == arg_type, \
+    "Function '%s' needs type %s as argument %i, given type %s!", \
+    name, \
+    btype_name(arg_type), \
+    index, \
+    btype_name(a->cell[index]->type));
 
 #define ASSERT_ARG_LEN(a, len, name) \
   ASSERT(a, a->count == len, \
@@ -25,6 +27,14 @@ bval* builtin_mul(benv* e, bval* a) { return builtin_op(e, a, "*"); }
 bval* builtin_div(benv* e, bval* a) { return builtin_op(e, a, "/"); }
 bval* builtin_mod(benv* e, bval* a) { return builtin_op(e, a, "%"); }
 
+// comparator builtins
+bval* builtin_lt(benv* e, bval* a) { return builtin_ord(e, a, "<"); }
+bval* builtin_gt(benv* e, bval* a) { return builtin_ord(e, a, ">"); }
+bval* builtin_le(benv* e, bval* a) { return builtin_ord(e, a, "<="); }
+bval* builtin_ge(benv* e, bval* a) { return builtin_ord(e, a, ">="); }
+bval* builtin_eq(benv* e, bval* a) { return builtin_cmp(e, a, "="); }
+bval* builtin_ne(benv* e, bval* a) { return builtin_cmp(e, a, "!="); }
+
 
 bval* builtin_def(benv* e, bval* a) {
   return builtin_var(e, a, "def");
@@ -36,7 +46,7 @@ bval* builtin_let(benv* e, bval* a) {
 
 
 bval* builtin_var(benv* e, bval* a, char* fn) {
-  ASSERT_QEXPR_ARG(a, 0, "def");
+  ASSERT_ARG_TYPE(a, 0, BVAL_QEXPR, "def");
 
   bval* syms = a->cell[0];
 
@@ -70,8 +80,8 @@ bval* builtin_var(benv* e, bval* a, char* fn) {
 
 bval* builtin_lambda(benv* e, bval* a) {
   ASSERT_ARG_LEN(a, 2, "\\");
-  ASSERT_QEXPR_ARG(a, 0, "\\");
-  ASSERT_QEXPR_ARG(a, 1, "\\");
+  ASSERT_ARG_TYPE(a, 0, BVAL_QEXPR, "\\");
+  ASSERT_ARG_TYPE(a, 1, BVAL_QEXPR, "\\");
 
   bval* arg_list = a->cell[0];
 
@@ -92,7 +102,7 @@ bval* builtin_lambda(benv* e, bval* a) {
 
 bval* builtin_cons(benv* e, bval* a) {
   ASSERT_ARG_LEN(a, 2, "cons");
-  ASSERT_QEXPR_ARG(a, 1, "cons");
+  ASSERT_ARG_TYPE(a, 1, BVAL_QEXPR, "cons");
 
   // create a new q expression with the first arg of cons
   // as its first element
@@ -108,7 +118,7 @@ bval* builtin_cons(benv* e, bval* a) {
 
 bval* builtin_init(benv* e, bval* a) {
   ASSERT_ARG_LEN(a, 1, "init");
-  ASSERT_QEXPR_ARG(a, 0, "init");
+  ASSERT_ARG_TYPE(a, 0, BVAL_QEXPR, "init");
   ASSERT_NOT_EMPTY(a, "init");
 
   bval* v = bval_take(a, 0);
@@ -119,7 +129,7 @@ bval* builtin_init(benv* e, bval* a) {
 
 bval* builtin_len(benv* e, bval* a) {
   ASSERT_ARG_LEN(a, 1, "len");
-  ASSERT_QEXPR_ARG(a, 0, "len");
+  ASSERT_ARG_TYPE(a, 0, BVAL_QEXPR, "len");
 
   bval* v = bval_num((double) a->cell[0]->count);
   bval_del(a);
@@ -129,7 +139,7 @@ bval* builtin_len(benv* e, bval* a) {
 
 bval* builtin_head(benv* e, bval* a) {
   ASSERT_ARG_LEN(a, 1, "head");
-  ASSERT_QEXPR_ARG(a, 0, "head");
+  ASSERT_ARG_TYPE(a, 0, BVAL_QEXPR, "head");
   ASSERT_NOT_EMPTY(a, "head");
 
   bval* v = bval_take(a, 0);
@@ -141,7 +151,7 @@ bval* builtin_head(benv* e, bval* a) {
 
 bval* builtin_tail(benv* e, bval* a) {
   ASSERT_ARG_LEN(a, 1, "tail");
-  ASSERT_QEXPR_ARG(a, 0, "tail");
+  ASSERT_ARG_TYPE(a, 0, BVAL_QEXPR, "tail");
   ASSERT_NOT_EMPTY(a, "tail");
 
   bval* v = bval_take(a, 0);
@@ -158,7 +168,7 @@ bval* builtin_list(benv* e, bval* a) {
 
 bval* builtin_eval(benv* e, bval* a) {
   ASSERT_ARG_LEN(a, 1, "eval");
-  ASSERT_QEXPR_ARG(a, 0, "eval");
+  ASSERT_ARG_TYPE(a, 0, BVAL_QEXPR, "eval");
 
   bval* x = bval_take(a, 0);
   x->type = BVAL_SEXPR;
@@ -168,7 +178,7 @@ bval* builtin_eval(benv* e, bval* a) {
 
 bval* builtin_join(benv* e, bval* a) {
   for (int i = 0; i < a->count; i++) {
-    ASSERT_QEXPR_ARG(a, i, "join");
+    ASSERT_ARG_TYPE(a, i, BVAL_QEXPR, "join");
   }
 
   bval* x = bval_pop(a, 0);
@@ -228,4 +238,56 @@ bval* builtin_op(benv* e, bval* v, char* op) {
   bval_del(v);
 
   return head;
+}
+
+
+bval* builtin_if(benv* e, bval* a) {
+  ASSERT_ARG_LEN(a, 3, "if");
+  ASSERT_ARG_TYPE(a, 0, BVAL_NUM, "if");
+  ASSERT_ARG_TYPE(a, 1, BVAL_QEXPR, "if");
+  ASSERT_ARG_TYPE(a, 2, BVAL_QEXPR, "if");
+
+  // make args eval-able
+  a->cell[1]->type = BVAL_SEXPR;
+  a->cell[2]->type = BVAL_SEXPR;
+
+  bval* r = a->cell[0]->num
+    ? bval_eval(e, bval_pop(a, 1))
+    : bval_eval(e, bval_pop(a, 2));
+
+  bval_del(a);
+  return r;
+}
+
+
+bval* builtin_ord(benv* e, bval* a, char* op) {
+  ASSERT_ARG_LEN(a, 2, op);
+  ASSERT_ARG_TYPE(a, 0, BVAL_NUM, op);
+  ASSERT_ARG_TYPE(a, 1, BVAL_NUM, op);
+
+  int r;
+  double x = a->cell[0]->num;
+  double y = a->cell[1]->num;
+
+  if (strcmp(op, "<"))  r = (x < y);
+  if (strcmp(op, ">"))  r = (x > y);
+  if (strcmp(op, "<=")) r = (x <= y);
+  if (strcmp(op, ">=")) r = (x >= y);
+
+  bval_del(a);
+  return bval_num(r);
+}
+
+bval* builtin_cmp(benv* e, bval* a, char* op) {
+  ASSERT_ARG_LEN(a, 2, op);
+
+  int r;
+  bval* x = a->cell[0];
+  bval* y = a->cell[1];
+
+  if (strcmp(op, "="))   r =  bval_eq(x, y);
+  if (strcmp(op, "!="))  r = !bval_eq(x, y);
+
+  bval_del(a);
+  return bval_num(r);
 }
