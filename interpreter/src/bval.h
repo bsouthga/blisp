@@ -123,6 +123,25 @@ bval* bval_call(benv* e, bval* f, bval* a) {
     }
 
     bval* sym = bval_pop(f->formals, 0);
+
+    // syntax for allowing remainder args
+    if (strcmp(sym->sym, "&") == 0) {
+
+      if (f->formals->count != 1) {
+        bval_del(a);
+        return bval_err(
+          "Function format invalid."
+          "Symbol '&' not followed by single symbol."
+        );
+      }
+
+      bval* nsym = bval_pop(f->formals, 0);
+      benv_put(f->env, nsym, builtin_list(e, a));
+      bval_del(sym);
+      bval_del(nsym);
+      break;
+    }
+
     bval* val = bval_pop(a, 0);
 
     // bind a copy of the val to the functions environment
@@ -132,7 +151,28 @@ bval* bval_call(benv* e, bval* f, bval* a) {
     bval_del(val);
   }
 
+  // deallocate arglist
   bval_del(a);
+
+  if (f->formals->count > 0 && strcmp(f->formals->cell[0]->sym, "&") == 0) {
+
+    if (f->formals->count != 2) {
+      return bval_err(
+        "Function format invalid."
+        "Symbol '&' not followed by single symbol."
+      );
+    }
+
+    bval_del(bval_pop(f->formals, 0));
+
+    // no remaining args for vararg list, assign empty list
+    bval* sym = bval_pop(f->formals, 0);
+    bval* val = bval_qexpr();
+    benv_put(f->env, sym, val);
+    bval_del(sym);
+    bval_del(val);
+  }
+
 
   // if all the functions parameters have been bound to arguments,
   // evaluate the function and return a result
