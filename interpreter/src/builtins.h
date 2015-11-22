@@ -285,8 +285,8 @@ bval* builtin_cmp(benv* e, bval* a, char* op) {
   bval* x = a->cell[0];
   bval* y = a->cell[1];
 
-  if (strcmp(op, "="))   r =  bval_eq(x, y);
-  if (strcmp(op, "!="))  r = !bval_eq(x, y);
+  if (strcmp(op, "=") == 0)   r =  bval_eq(x, y);
+  if (strcmp(op, "!=") == 0)  r = !bval_eq(x, y);
 
   bval_del(a);
   return bval_num(r);
