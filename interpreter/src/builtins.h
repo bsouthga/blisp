@@ -1,25 +1,3 @@
-/**
- * Error reporting macros
- */
-#define ASSERT_ARG_TYPE(a, index, arg_type, name) \
-  ASSERT(a, a->cell[index]->type == arg_type, \
-    "Function '%s' needs type %s as argument %i, given type %s!", \
-    name, \
-    btype_name(arg_type), \
-    index, \
-    btype_name(a->cell[index]->type));
-
-#define ASSERT_ARG_LEN(a, len, name) \
-  ASSERT(a, a->count == len, \
-    "Function '%s' given %i arguments, expected %i", \
-    name, a->count, len);
-
-#define ASSERT_NOT_EMPTY(a, name) \
-  ASSERT(a, a->cell[0]->count != 0, \
-    "Function '%s' passed empty list!", \
-    name);
-
-
 // math builtins
 bval* builtin_add(benv* e, bval* a) { return builtin_op(e, a, "+"); }
 bval* builtin_sub(benv* e, bval* a) { return builtin_op(e, a, "-"); }
@@ -97,6 +75,67 @@ bval* builtin_lambda(benv* e, bval* a) {
   bval_del(a);
 
   return bval_lambda(formals, body);
+}
+
+
+bval* builtin_print(benv* e, bval* a) {
+  for (int i = 0; i < a->count; i++) {
+    bval_print(a->cell[i]);
+    putchar(' ');
+  }
+  putchar('\n');
+  bval_del(a);
+  return bval_sexpr();
+}
+
+
+bval* builtin_error(benv* e, bval* a) {
+  ASSERT_ARG_LEN(a, 1, "error");
+  ASSERT_ARG_TYPE(a, 0, BVAL_STR, "error");
+
+  bval* err = bval_err(a->cell[0]->str);
+  bval_del(a);
+  return err;
+}
+
+
+bval* builtin_load(benv* e, bval* a) {
+  ASSERT_ARG_LEN(a, 1, "load");
+  ASSERT_ARG_TYPE(a, 0, BVAL_STR, "load");
+
+  mpc_result_t r;
+
+  if (mpc_parse_contents(a->cell[0]->str, Blisp, &r)) {
+    bval* expr = bval_read(r.output);
+    mpc_ast_delete(r.output);
+
+    // pop expressions off stack and eval
+    while(expr->count) {
+      bval* x = bval_eval(e, bval_pop(expr, 0));
+
+      switch (x->type) {
+        case BVAL_ERR:
+        case BVAL_STR:
+        case BVAL_NUM:
+          bval_println(x);
+      }
+
+      bval_del(x);
+    }
+
+    bval_del(expr);
+    bval_del(a);
+
+    return bval_sexpr();
+  } else {
+    char* error_msg = mpc_err_string(r.error);
+    mpc_err_delete(r.error);
+    bval* err = bval_err("Could not load library due to error: %s", error_msg);
+    free(error_msg);
+    bval_del(a);
+    return err;
+  }
+
 }
 
 

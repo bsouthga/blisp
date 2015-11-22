@@ -1,16 +1,35 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <editline/readline.h>
-#include "mpc.h"
+#include "../lib/mpc.h"
 
 
-// veriadic macro
+
 #define ASSERT(arg, cond, fmt, ...) \
   if (!(cond)) { \
     bval* err = bval_err(fmt, ##__VA_ARGS__); \
     bval_del(arg); \
     return err; \
   }
+
+#define ASSERT_ARG_TYPE(a, index, arg_type, name) \
+  ASSERT(a, a->cell[index]->type == arg_type, \
+    "Function '%s' needs type %s as argument %i, given type %s!", \
+    name, \
+    btype_name(arg_type), \
+    index, \
+    btype_name(a->cell[index]->type));
+
+#define ASSERT_ARG_LEN(a, len, name) \
+  ASSERT(a, a->count == len, \
+    "Function '%s' given %i arguments, expected %i", \
+    name, a->count, len);
+
+#define ASSERT_NOT_EMPTY(a, name) \
+  ASSERT(a, a->cell[0]->count != 0, \
+    "Function '%s' passed empty list!", \
+    name);
+
 
 
 struct bval;
@@ -57,6 +76,15 @@ enum {
   BVAL_SYM,
   BVAL_STR
 };
+
+mpc_parser_t* Comment;
+mpc_parser_t* Number;
+mpc_parser_t* Symbol;
+mpc_parser_t* String;
+mpc_parser_t* Sexpr;
+mpc_parser_t* Qexpr;
+mpc_parser_t* Expr;
+mpc_parser_t* Blisp;
 
 benv* benv_new(void);
 bval* benv_get(benv* e, bval* k);
@@ -107,6 +135,9 @@ bval* builtin_lambda(benv* e, bval* a);
 bval* builtin_var(benv* e, bval* a, char* fn);
 bval* builtin_cmp(benv* e, bval* a, char* op);
 bval* builtin_type(benv* e, bval* a);
+bval* builtin_load(benv* e, bval* a);
+bval* builtin_print(benv* e, bval* a);
+bval* builtin_error(benv* e, bval* a);
 
 bval* builtin_head(benv* e, bval* a);
 bval* builtin_tail(benv* e, bval* a);

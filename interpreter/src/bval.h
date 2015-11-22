@@ -282,6 +282,7 @@ bval* bval_read_str(mpc_ast_t* tree) {
  */
 bval* bval_read(mpc_ast_t* tree) {
 
+
   if (strstr(tree->tag, "number")) return bval_read_num(tree);
   if (strstr(tree->tag, "symbol")) return bval_sym(tree->contents);
   if (strstr(tree->tag, "string")) return bval_read_str(tree);
@@ -301,6 +302,7 @@ bval* bval_read(mpc_ast_t* tree) {
     if (strcmp(child->contents, "{") == 0) continue;
     if (strcmp(child->contents, "}") == 0) continue;
     if (strcmp(child->tag, "regex")  == 0) continue;
+    if (strstr(child->tag, "comment"))     continue;
 
     x = bval_add(x, bval_read(child));
   }
@@ -340,7 +342,6 @@ int bval_eq(bval* x, bval* y) {
 
   return 0;
 }
-
 
 
 /**
