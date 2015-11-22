@@ -113,6 +113,7 @@ bval* builtin_sub(benv* e, bval* a);
 bval* builtin_mul(benv* e, bval* a);
 bval* builtin_div(benv* e, bval* a);
 bval* builtin_mod(benv* e, bval* a);
+bval* builtin_not(benv* e, bval* a);
 
 bval* builtin_if(benv* e, bval* a);
 bval* builtin_lt(benv* e, bval* a);

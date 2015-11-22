@@ -110,6 +110,7 @@ void benv_add_builtins(benv* e) {
   benv_add_builtin(e, "*", builtin_mul);
   benv_add_builtin(e, "/", builtin_div);
   benv_add_builtin(e, "%", builtin_mod);
+  benv_add_builtin(e, "not", builtin_not);
 
   benv_add_builtin(e, "if", builtin_if);
   benv_add_builtin(e, "<",  builtin_lt);

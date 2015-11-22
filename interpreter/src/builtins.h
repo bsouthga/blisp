@@ -241,6 +241,20 @@ bval* builtin_op(benv* e, bval* v, char* op) {
 }
 
 
+bval* builtin_not(benv* e, bval* a) {
+  ASSERT_ARG_LEN(a, 1, "not");
+  ASSERT_ARG_TYPE(a, 0, BVAL_NUM, "not");
+  bval* x = bval_pop(a, 0);
+
+  x->num = x->num
+    ? ((double) 0)
+    : ((double) 1);
+
+  bval_del(a);
+  return x;
+}
+
+
 bval* builtin_if(benv* e, bval* a) {
   ASSERT_ARG_LEN(a, 3, "if");
   ASSERT_ARG_TYPE(a, 0, BVAL_NUM, "if");
