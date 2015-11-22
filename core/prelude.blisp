@@ -1,1 +1,2 @@
-print "Hello!"
+; vim: set ft=lisp:
+print "Loading prelude..."

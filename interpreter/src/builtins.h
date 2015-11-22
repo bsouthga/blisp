@@ -151,14 +151,34 @@ bval* builtin_type(benv* e, bval* a) {
 
 bval* builtin_cons(benv* e, bval* a) {
   ASSERT_ARG_LEN(a, 2, "cons");
-  ASSERT_ARG_TYPE(a, 1, BVAL_QEXPR, "cons");
 
-  // create a new q expression with the first arg of cons
-  // as its first element
-  bval* v = bval_add(bval_qexpr(), bval_pop(a, 0));
+  bval* v;
 
-  // join the new q expression with the qexpr passed to cons
-  v = bval_join(v, bval_pop(a, 0));
+  // switch on second arg to proceed
+  switch (a->cell[1]->type) {
+
+    case BVAL_STR:
+      // for strings, join is the same as cons
+      ASSERT_ARG_TYPE(a, 0, BVAL_STR, "cons");
+      ASSERT(a, strlen(a->cell[0]->str) == 1,
+        "Function cons takes a single character as the first argument.");
+      return builtin_join(e, a);
+
+    case BVAL_QEXPR:
+      // create a new q expression with the first arg of cons
+      // as its first element
+      v = bval_add(bval_qexpr(), bval_pop(a, 0));
+      // join the new q expression with the qexpr passed to cons
+      v = bval_join(v, bval_pop(a, 0));
+      break;
+
+    default:
+      v = bval_err(
+        "Invalid type passed as second argument to cons. Got %s, Expected %s or %s.",
+        btype_name(a->cell[0]->type), btype_name(BVAL_STR), btype_name(BVAL_QEXPR)
+      );
+      break;
+  }
 
   bval_del(a);
   return v;
@@ -178,9 +198,27 @@ bval* builtin_init(benv* e, bval* a) {
 
 bval* builtin_len(benv* e, bval* a) {
   ASSERT_ARG_LEN(a, 1, "len");
-  ASSERT_ARG_TYPE(a, 0, BVAL_QEXPR, "len");
 
-  bval* v = bval_num((double) a->cell[0]->count);
+  bval* v;
+
+  switch (a->cell[0]->type) {
+    case BVAL_QEXPR:
+      v = bval_num((double) a->cell[0]->count);
+      break;
+
+    case BVAL_STR:
+      v = bval_num((double) strlen(a->cell[0]->str));
+      break;
+
+    default:
+      v = bval_err(
+        "Invalid type passed to len. Got %s, Expected %s or %s.",
+        btype_name(a->cell[0]->type), btype_name(BVAL_STR), btype_name(BVAL_QEXPR)
+      );
+      break;
+
+  }
+
   bval_del(a);
   return v;
 }
@@ -188,23 +226,67 @@ bval* builtin_len(benv* e, bval* a) {
 
 bval* builtin_head(benv* e, bval* a) {
   ASSERT_ARG_LEN(a, 1, "head");
-  ASSERT_ARG_TYPE(a, 0, BVAL_QEXPR, "head");
   ASSERT_NOT_EMPTY(a, "head");
 
-  bval* v = bval_take(a, 0);
-  // delete remaining elements
-  while (v->count > 1) bval_del(bval_pop(v, 1));
+  bval* v;
+
+  switch (a->cell[0]->type) {
+
+    case BVAL_QEXPR:
+      v = bval_take(a, 0);
+      // delete remaining elements
+      while (v->count > 1) bval_del(bval_pop(v, 1));
+      break;
+
+    case BVAL_STR:
+      a->cell[0]->str[1] = '\0';
+      v = bval_str(a->cell[0]->str);
+      bval_del(a);
+      break;
+
+    default:
+      v = bval_err(
+        "Invalid type passed to head. Got %s, Expected %s or %s.",
+        btype_name(a->cell[0]->type), btype_name(BVAL_STR), btype_name(BVAL_QEXPR)
+      );
+      bval_del(a);
+      break;
+
+  }
+
   return v;
 }
 
 
 bval* builtin_tail(benv* e, bval* a) {
   ASSERT_ARG_LEN(a, 1, "tail");
-  ASSERT_ARG_TYPE(a, 0, BVAL_QEXPR, "tail");
   ASSERT_NOT_EMPTY(a, "tail");
 
-  bval* v = bval_take(a, 0);
-  bval_del(bval_pop(v, 0));
+  bval* v;
+
+  switch (a->cell[0]->type) {
+
+    case BVAL_QEXPR:
+      v = bval_take(a, 0);
+      bval_del(bval_pop(v, 0));
+      break;
+
+    case BVAL_STR:
+      // increment string pointer
+      v = bval_str(a->cell[0]->str + 1);
+      bval_del(a);
+      break;
+
+    default:
+      v = bval_err(
+        "Invalid type passed to tail. Got %s, Expected %s or %s.",
+        btype_name(a->cell[0]->type), btype_name(BVAL_STR), btype_name(BVAL_QEXPR)
+      );
+      bval_del(a);
+      break;
+
+  }
+
   return v;
 }
 
@@ -226,13 +308,48 @@ bval* builtin_eval(benv* e, bval* a) {
 
 
 bval* builtin_join(benv* e, bval* a) {
-  for (int i = 0; i < a->count; i++) {
-    ASSERT_ARG_TYPE(a, i, BVAL_QEXPR, "join");
-  }
 
+  // get first val
   bval* x = bval_pop(a, 0);
 
-  while (a->count) x = bval_join(x, bval_pop(a, 0));
+  int total_size;
+
+  switch (x->type) {
+
+    case BVAL_QEXPR:
+      for (int i = 0; i < a->count; i++) {
+        ASSERT_ARG_TYPE(a, i, BVAL_QEXPR, "join");
+      }
+      while (a->count) x = bval_join(x, bval_pop(a, 0));
+      break;
+
+    case BVAL_STR:
+      total_size = strlen(x->str);
+
+      for (int i = 0; i < a->count; i++) {
+        ASSERT_ARG_TYPE(a, i, BVAL_STR, "join");
+        total_size += strlen(a->cell[i]->str);
+      }
+
+      char* new_str = malloc(total_size + 1);
+
+      strcpy(new_str, x->str);
+
+      for (int i = 0; i < a->count; i++) {
+        strcat(new_str, a->cell[i]->str);
+      }
+
+      free(x->str);
+      x->str = malloc(strlen(new_str) + 1);
+      strcpy(x->str, new_str);
+      break;
+
+    default:
+      x = bval_err(
+        "Invalid type passed to join. Got %s, Expected %s or %s.",
+        btype_name(x->type), btype_name(BVAL_STR), btype_name(BVAL_QEXPR)
+      );
+  }
 
   bval_del(a);
   return x;

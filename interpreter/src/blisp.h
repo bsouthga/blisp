@@ -25,10 +25,14 @@
     "Function '%s' given %i arguments, expected %i", \
     name, a->count, len);
 
+// check for non-empty string or Q-expr
 #define ASSERT_NOT_EMPTY(a, name) \
-  ASSERT(a, a->cell[0]->count != 0, \
-    "Function '%s' passed empty list!", \
-    name);
+  ASSERT(a, ( \
+      ((a->cell[0]->type == BVAL_QEXPR) && (a->cell[0]->count != 0)) || \
+      ((a->cell[0]->type == BVAL_STR) && (a->cell[0]->str[0] != '\0')) \
+    ), \
+    "Function '%s' passed empty %s!", \
+    name, btype_name(a->cell[0]->type));
 
 
 
