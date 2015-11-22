@@ -1,7 +1,7 @@
 #include "blisp.h"
-#include "bval.h"
-#include "benv.h"
-#include "builtins.h"
+#include "bval.c"
+#include "benv.c"
+#include "builtins.c"
 
 int main(int argc, char** argv) {
 
