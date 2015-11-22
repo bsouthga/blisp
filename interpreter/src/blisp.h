@@ -139,9 +139,11 @@ bval* builtin_lambda(benv* e, bval* a);
 bval* builtin_var(benv* e, bval* a, char* fn);
 bval* builtin_cmp(benv* e, bval* a, char* op);
 bval* builtin_type(benv* e, bval* a);
-bval* builtin_load(benv* e, bval* a);
 bval* builtin_print(benv* e, bval* a);
 bval* builtin_error(benv* e, bval* a);
+bval* bultin_load_file(benv* e, bval* a, char* op);
+bval* builtin_read(benv* e, bval* a);
+bval* builtin_load(benv* e, bval* a);
 
 bval* builtin_head(benv* e, bval* a);
 bval* builtin_tail(benv* e, bval* a);

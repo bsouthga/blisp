@@ -100,14 +100,28 @@ bval* builtin_error(benv* e, bval* a) {
 
 
 bval* builtin_load(benv* e, bval* a) {
-  ASSERT_ARG_LEN(a, 1, "load");
-  ASSERT_ARG_TYPE(a, 0, BVAL_STR, "load");
+  return bultin_load_file(e, a, "load");
+}
+
+bval* builtin_read(benv* e, bval* a) {
+  return bultin_load_file(e, a, "read");
+}
+
+bval* bultin_load_file(benv* e, bval* a, char* op) {
+  ASSERT_ARG_LEN(a, 1, op);
+  ASSERT_ARG_TYPE(a, 0, BVAL_STR, op);
 
   mpc_result_t r;
 
   if (mpc_parse_contents(a->cell[0]->str, Blisp, &r)) {
     bval* expr = bval_read(r.output);
     mpc_ast_delete(r.output);
+
+    if (strcmp(op, "read") == 0) {
+      expr->type = BVAL_QEXPR;
+      bval_del(a);
+      return expr;
+    };
 
     // pop expressions off stack and eval
     while(expr->count) {
@@ -130,12 +144,11 @@ bval* builtin_load(benv* e, bval* a) {
   } else {
     char* error_msg = mpc_err_string(r.error);
     mpc_err_delete(r.error);
-    bval* err = bval_err("Could not load library due to error: %s", error_msg);
+    bval* err = bval_err("Could not %s library due to error: %s", op, error_msg);
     free(error_msg);
     bval_del(a);
     return err;
   }
-
 }
 
 

@@ -1,2 +1,26 @@
-; vim: set ft=lisp:
-print "Loading prelude..."
+;; syntax highlighting...
+;; vim: set ft=clojure:
+
+;;
+;; cleaner function definition
+;;
+(def {defn} (\
+  {args body} {
+    def (head args) (\
+      (tail args) body )}))
+
+;; booleans
+(def {true} 1)
+(def {false} 0)
+
+;; logical operators
+(defn {or a b} {
+  (if a {a} {b})})
+
+(defn {and a b} {
+  (not (- a b))})
+
+;; check for succes!
+(if (or false true)
+  {print "It works!"}
+  {print "Oh no!"})
