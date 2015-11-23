@@ -55,8 +55,11 @@ bval* bval_str(char* str) {
   strcpy(v->str, str);
   return v;
 }
-
-
+bval* bval_ok(void) {
+  bval* v = malloc(sizeof(bval));
+  v->type = BVAL_OK;
+  return v;
+}
 // veriadic error message function
 bval* bval_err(char* fmt, ...) {
   bval* v = malloc(sizeof(bval));
@@ -207,7 +210,9 @@ bval* bval_call(benv* e, bval* f, bval* a) {
 void bval_del(bval* v) {
 
   switch (v->type) {
+    case BVAL_OK:
     case BVAL_NUM: break; // no property pointers for BVAL_NUM
+
     case BVAL_ERR: free(v->err); break;
     case BVAL_SYM: free(v->sym); break;
     case BVAL_STR: free(v->str); break;
@@ -316,6 +321,7 @@ int bval_eq(bval* x, bval* y) {
   if (x->type != y->type) return 0;
 
   switch (x->type) {
+    case BVAL_OK:  return 0;
     case BVAL_NUM: return x->num == y->num;
     case BVAL_ERR: return (strcmp(x->err, y->err) == 0);
     case BVAL_SYM: return (strcmp(x->sym, y->sym) == 0);
@@ -405,6 +411,7 @@ bval* bval_copy(bval* v) {
       break;
 
     case BVAL_NUM: x->num = v->num; break;
+    case BVAL_OK: break;
 
     case BVAL_ERR:
       x->err = malloc(strlen(v->err) + 1);
@@ -457,6 +464,7 @@ void bval_print(bval* v) {
     case BVAL_SEXPR: bval_expr_print(v, '(', ')');      break;
     case BVAL_QEXPR: bval_expr_print(v, '{', '}');      break;
     case BVAL_STR:   bval_str_print(v);                 break;
+    case BVAL_OK: break;
   }
 }
 
@@ -493,6 +501,7 @@ char* btype_name(int type) {
     case BVAL_ERR:   return "Error";
     case BVAL_SYM:   return "Symbol";
     case BVAL_STR:   return "String";
+    case BVAL_OK:    return "Ok";
     case BVAL_SEXPR: return "S-Expression";
     case BVAL_QEXPR: return "Q-Expression";
   }

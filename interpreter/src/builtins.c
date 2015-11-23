@@ -52,7 +52,7 @@ bval* builtin_var(benv* e, bval* a, char* fn) {
 
   bval_del(a);
 
-  return bval_sexpr();
+  return bval_ok();
 }
 
 
@@ -85,7 +85,19 @@ bval* builtin_print(benv* e, bval* a) {
   }
   putchar('\n');
   bval_del(a);
-  return bval_sexpr();
+  return bval_ok();
+}
+
+
+bval* builtin_show(benv* e, bval* a) {
+  for (int i = 0; i < a->count; i++) {
+    ASSERT_ARG_TYPE(a, i, BVAL_STR, "show");
+    printf("%s", a->cell[i]->str);
+    putchar(' ');
+  }
+  putchar('\n');
+  bval_del(a);
+  return bval_ok();
 }
 
 
@@ -96,6 +108,66 @@ bval* builtin_error(benv* e, bval* a) {
   bval* err = bval_err(a->cell[0]->str);
   bval_del(a);
   return err;
+}
+
+
+bval* builtin_exit(benv* e, bval* a) {
+  printf("Exiting!");
+  exit(0);
+  return bval_ok();
+}
+
+
+bval* builtin_fwrite(benv* e, bval* a) {
+  ASSERT_ARG_LEN(a, 2, "fwrite");
+  ASSERT_ARG_TYPE(a, 0, BVAL_STR, "fwrite");
+  ASSERT_ARG_TYPE(a, 1, BVAL_STR, "fwrite");
+
+  bval* file_param = bval_pop(a, 0);
+  bval* out_string = bval_pop(a, 0);
+  bval* x;
+
+  FILE* input_file = fopen(file_param->str, "w");
+
+  if (input_file) {
+    fprintf(input_file, "%s", out_string->str);
+    fclose(input_file);
+    x = bval_num(1);
+  } else {
+    x = bval_err("File '%s' failed to open.", file_param->str);
+  }
+
+  bval_del(file_param);
+  return x;
+}
+
+
+bval* builtin_fread(benv* e, bval* a) {
+  ASSERT_ARG_LEN(a, 1, "fread");
+  ASSERT_ARG_TYPE(a, 0, BVAL_STR, "fread");
+
+  bval* file_param = bval_pop(a, 0);
+  bval* x;
+
+  char* file_contents;
+  size_t input_file_size;
+
+  FILE* input_file = fopen(file_param->str, "rb");
+  if (input_file) {
+    fseek(input_file, 0, SEEK_END);
+    input_file_size = ftell(input_file);
+    rewind(input_file);
+    file_contents = malloc((input_file_size + 1) * (sizeof(char)));
+    fread(file_contents, sizeof(char), input_file_size, input_file);
+    fclose(input_file);
+    file_contents[input_file_size] = '\0';
+    x = bval_str(file_contents);
+  } else {
+    x = bval_err("File '%s' not found.", file_param->str);
+  }
+
+  bval_del(file_param);
+  return x;
 }
 
 
@@ -140,7 +212,7 @@ bval* bultin_load_file(benv* e, bval* a, char* op) {
     bval_del(expr);
     bval_del(a);
 
-    return bval_sexpr();
+    return bval_ok();
   } else {
     char* error_msg = mpc_err_string(r.error);
     mpc_err_delete(r.error);

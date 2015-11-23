@@ -78,7 +78,8 @@ enum {
   BVAL_QEXPR,
   BVAL_FUN,
   BVAL_SYM,
-  BVAL_STR
+  BVAL_STR,
+  BVAL_OK
 };
 
 mpc_parser_t* Comment;
@@ -144,6 +145,11 @@ bval* builtin_error(benv* e, bval* a);
 bval* bultin_load_file(benv* e, bval* a, char* op);
 bval* builtin_read(benv* e, bval* a);
 bval* builtin_load(benv* e, bval* a);
+bval* builtin_show(benv* e, bval* a);
+bval* builtin_exit(benv* e, bval* a);
+bval* builtin_fread(benv* e, bval* a);
+bval* builtin_fwrite(benv* e, bval* a);
+
 
 bval* builtin_head(benv* e, bval* a);
 bval* builtin_tail(benv* e, bval* a);
