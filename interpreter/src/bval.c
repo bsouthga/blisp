@@ -136,13 +136,13 @@ bval* bval_call(benv* e, bval* f, bval* a) {
     bval* sym = bval_pop(f->formals, 0);
 
     // syntax for allowing remainder args
-    if (strcmp(sym->sym, "&") == 0) {
+    if (strcmp(sym->sym, "::") == 0) {
 
       if (f->formals->count != 1) {
         bval_del(a);
         return bval_err(
           "Function format invalid."
-          "Symbol '&' not followed by single symbol."
+          "Symbol '::' not followed by single symbol."
         );
       }
 
@@ -165,12 +165,12 @@ bval* bval_call(benv* e, bval* f, bval* a) {
   // deallocate arglist
   bval_del(a);
 
-  if (f->formals->count > 0 && strcmp(f->formals->cell[0]->sym, "&") == 0) {
+  if (f->formals->count > 0 && strcmp(f->formals->cell[0]->sym, "::") == 0) {
 
     if (f->formals->count != 2) {
       return bval_err(
         "Function format invalid."
-        "Symbol '&' not followed by single symbol."
+        "Symbol '::' not followed by single symbol."
       );
     }
 

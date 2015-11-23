@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
         comment  : /;[^\\r\\n]*/                            ;\
         number   : /-?[0-9]+(\\.[0-9]+)?/                   ;\
         string   : /\"(\\\\.|[^\"])*\"/                     ;\
-        symbol   : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&%]+/        ;\
+        symbol   : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&%:]+/       ;\
         sexpr    : '(' <expr>* ')'                          ;\
         qexpr    : '{' <expr>* '}'                          ;\
         expr     : <comment> | \

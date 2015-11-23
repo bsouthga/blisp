@@ -101,7 +101,7 @@ void benv_add_builtins(benv* e) {
   benv_add_builtin(e, "join", builtin_join);
 
   benv_add_builtin(e, "def",   builtin_def);
-  benv_add_builtin(e, "let",   builtin_let);
+  benv_add_builtin(e, "var",   builtin_var);
   benv_add_builtin(e, "\\",    builtin_lambda);
   benv_add_builtin(e, "type",  builtin_type);
   benv_add_builtin(e, "load",  builtin_load);

@@ -15,15 +15,15 @@ bval* builtin_ne(benv* e, bval* a) { return builtin_cmp(e, a, "!="); }
 
 
 bval* builtin_def(benv* e, bval* a) {
-  return builtin_var(e, a, "def");
+  return builtin_variable(e, a, "def");
 }
 
-bval* builtin_let(benv* e, bval* a) {
-  return builtin_var(e, a, "let");
+bval* builtin_var(benv* e, bval* a) {
+  return builtin_variable(e, a, "var");
 }
 
 
-bval* builtin_var(benv* e, bval* a, char* fn) {
+bval* builtin_variable(benv* e, bval* a, char* fn) {
   ASSERT_ARG_TYPE(a, 0, BVAL_QEXPR, "def");
 
   bval* syms = a->cell[0];
@@ -45,7 +45,7 @@ bval* builtin_var(benv* e, bval* a, char* fn) {
     if (strcmp(fn, "def") == 0) {
       benv_def(e, syms->cell[i], a->cell[i + 1]);
     }
-    if (strcmp(fn, "let") == 0) {
+    if (strcmp(fn, "var") == 0) {
       benv_put(e, syms->cell[i], a->cell[i + 1]);
     }
   }
@@ -456,7 +456,7 @@ bval* builtin_op(benv* e, bval* v, char* op) {
   bval* head = bval_pop(v, 0);
 
   // unary negation operator
-  if (strcmp(op, "-") == 0 && v->count == 1) {
+  if (strcmp(op, "-") == 0 && v->count == 0) {
     head->num = - head->num;
   }
 
