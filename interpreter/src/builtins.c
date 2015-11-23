@@ -112,8 +112,10 @@ bval* builtin_error(benv* e, bval* a) {
 
 
 bval* builtin_exit(benv* e, bval* a) {
+  ASSERT_ARG_LEN(a, 1, "exit");
+  ASSERT_ARG_TYPE(a, 0, BVAL_NUM, "exit");
   printf("Exiting!");
-  exit(0);
+  exit(!!a->cell[0]->num);
   return bval_ok();
 }
 
