@@ -1,26 +1,60 @@
 ;; syntax highlighting...
 ;; vim: set ft=clojure:
 
+
+;; primatives
+(def {true} 1)
+(def {false} 0)
+(def {nil} {})
+
+
 ;;
 ;; cleaner function definition
 ;;
-(def {defn} (\
-  {args body} {
-    def (head args) (\
-      (tail args) body )}))
+(def {defn}
+  (\ {args body}
+    {def (head args)
+      (\ (tail args) body )}))
 
-;; booleans
-(def {true} 1)
-(def {false} 0)
 
+;;
+;; parameter manipulation
+;;
+(defn {unpack f l}
+  {eval (join (list f) l)})
+
+(defn {pack f :: xs}
+  {f xs})
+
+(def {curry} unpack)
+(def {uncurry} pack)
+
+
+;;
+;; run functions in sequence
+;;
+(defn {do :: xs}
+  {if (= xs nil)
+    {nil}
+    {last xs}})
+
+
+;;
+;; create scope for local vars
+;;
+(defn {let a}
+  {((\ {_} b) ())})
+
+
+;;
 ;; logical operators
-(defn {or a b} {
-  (if a {a} {b})})
+;;
+(defn {not x}  {- 1 x})
+(defn {or x y} {+ x y})
+(defn {and a b} {* a b})
 
-(defn {and a b} {
-  (not (- a b))})
 
-;; check for succes!
+;; check for success!
 (if (or false true)
   {print "It works!"}
-  {print "Oh no!"})
+  {print "Oh no! :("})
