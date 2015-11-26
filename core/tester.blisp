@@ -1,6 +1,8 @@
+;; vim: set ft=clojure:
 ;;
 ;; Testing utilities
 ;;
+
 (load "./core/prelude.blisp")
 
 

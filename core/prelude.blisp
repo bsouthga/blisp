@@ -1,5 +1,8 @@
-;; syntax highlighting...
 ;; vim: set ft=clojure:
+;;
+;; Functional goodies
+;;
+
 (load "./core/base.blisp")
 
 ;;
