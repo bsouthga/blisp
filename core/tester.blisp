@@ -1,0 +1,9 @@
+;;
+;; Testing utilities
+;;
+(load "./core/prelude.blisp")
+
+
+(defn {test name x}
+  {print (join name
+    (if x {" -- passed!"} {" -- failed!"}))})

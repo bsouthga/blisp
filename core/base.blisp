@@ -1,0 +1,22 @@
+;; primatives
+(def {true} 1)
+(def {false} 0)
+(def {nil} {})
+
+;; lispy alias for lambda
+(def {fn} \)
+
+;;
+;; cleaner function definition
+;;
+(def {defn}
+  (fn {args body}
+    {def (head args)
+      (fn (tail args) body )}))
+
+;;
+;; logical operators
+;;
+(defn {not x}  {- 1 x})
+(defn {or x y} {+ x y})
+(defn {and a b} {* a b})

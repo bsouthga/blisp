@@ -1,21 +1,6 @@
 ;; syntax highlighting...
 ;; vim: set ft=clojure:
-
-
-;; primatives
-(def {true} 1)
-(def {false} 0)
-(def {nil} {})
-
-
-;;
-;; cleaner function definition
-;;
-(def {defn}
-  (\ {args body}
-    {def (head args)
-      (\ (tail args) body )}))
-
+(load "./core/base.blisp")
 
 ;;
 ;; parameter manipulation
@@ -29,7 +14,6 @@
 (def {curry} unpack)
 (def {uncurry} pack)
 
-
 ;;
 ;; run functions in sequence
 ;;
@@ -38,23 +22,47 @@
     {nil}
     {last xs}})
 
-
 ;;
 ;; create scope for local vars
 ;;
 (defn {let a}
-  {((\ {_} b) ())})
+  {((fn {_} a) ())})
 
 
-;;
-;; logical operators
-;;
-(defn {not x}  {- 1 x})
-(defn {or x y} {+ x y})
-(defn {and a b} {* a b})
+;; flip operators of function
+(defn {flip f a b}
+  {f b a})
 
 
-;; check for success!
-(if (or false true)
-  {print "It works!"}
-  {print "Oh no! :("})
+;; compose function
+(defn {comp f g x}
+  {f (g x)})
+
+
+;; first element
+(defn {first}
+  {eval (head l)})
+
+
+;; list methods
+(defn {nth n l}
+  {if (= n 0)
+    {first l}
+    {nth (- n 1) (tail l)}})
+
+
+(defn {last l}
+  {nth (- (len l) 1) l})
+
+
+(defn {take n l}
+  {if (= n 0)
+    {nil}
+    {join (head l)
+          (take (- n 1) (tail l))}})
+
+
+(defn {drop n l}
+  {if (= n 0)
+    {l}
+    {drop (- n 1) (tail l)}})
