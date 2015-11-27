@@ -444,7 +444,6 @@ bval* bval_copy(bval* v) {
 
 bval* bval_to_string(bval* v) {
   char buffer[512];
-  memset(buffer, 0, sizeof(buffer));
 
   bval* s = bval_qexpr();
 
