@@ -146,6 +146,7 @@ void benv_add_builtins(benv* e) {
   benv_add_builtin(e, "exit",  builtin_exit);
   benv_add_builtin(e, "fread", builtin_fread);
   benv_add_builtin(e, "fwrite", builtin_fwrite);
+  benv_add_builtin(e, "string", builtin_to_string);
 
 
   // math methods

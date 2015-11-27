@@ -1,0 +1,23 @@
+;;
+;; Testing utilities
+;;
+
+(load "./core/prelude.blisp")
+
+
+(defn {test name assertion}
+  {do
+    (print
+      (join name
+        (if assertion
+          {" -- passed!"}
+          {" -- failed!"})))
+    assertion})
+
+
+(defn {run-tests :: tests}
+  {let {
+    do (var {total} (sum tests))
+       (if total
+         {print (join total " tests failed!")}
+         {print "All tests pass!"})}})

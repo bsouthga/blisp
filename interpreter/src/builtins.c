@@ -388,6 +388,12 @@ bval* builtin_tail(benv* e, bval* a) {
 }
 
 
+bval* builtin_to_string(benv* e, bval* a) {
+  ASSERT_ARG_LEN(a, 1, "string");
+  return bval_to_string(bval_take(a, 0));
+}
+
+
 bval* builtin_list(benv* e, bval* a) {
   a->type = BVAL_QEXPR;
   return a;

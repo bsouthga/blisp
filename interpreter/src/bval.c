@@ -442,30 +442,61 @@ bval* bval_copy(bval* v) {
 }
 
 
+bval* bval_to_string(bval* v) {
+  char buffer[512];
+  memset(buffer, 0, sizeof(buffer));
+
+  bval* s = bval_qexpr();
+
+  switch (v->type) {
+    case BVAL_STR:    return v;
+    case BVAL_SEXPR:  return bval_expr_to_string(v, "(", ")");
+    case BVAL_QEXPR:  return bval_expr_to_string(v, "{", "}");
+    case BVAL_OK:     return bval_str("ok!");
+
+    case BVAL_FUN:
+      if (v->builtin) {
+        snprintf(buffer, sizeof(buffer), "<builtin: %s >", v->sym);
+        bval_add(s, bval_str(buffer));
+      } else {
+        bval_add(s, bval_str("(\\ "));
+        bval_add(s, bval_to_string(v->formals));
+        bval_add(s, bval_str(" "));
+        bval_add(s, bval_to_string(v->body));
+        bval_add(s, bval_str(")"));
+      }
+      break;
+
+    case BVAL_NUM:
+      snprintf(buffer, sizeof(buffer), "%lf", v->num);
+      bval_add(s, bval_str(buffer));
+      break;
+
+    case BVAL_ERR:
+      snprintf(buffer, sizeof(buffer), "Error: %s", v->err);
+      bval_add(s, bval_str(buffer));
+      break;
+
+    case BVAL_SYM:
+      snprintf(buffer, sizeof(buffer), "%s", v->sym);
+      bval_add(s, bval_str(buffer));
+      break;
+  }
+
+  benv* e = benv_new();
+  bval* out = builtin_join(e, s);
+  benv_del(e);
+  return out;
+}
+
+
+
 /**
  * Printing
  */
 void bval_print(bval* v) {
-  switch (v->type) {
-    case BVAL_FUN:
-      if (v->builtin) {
-        printf("<builtin: %s >", v->sym);
-      } else {
-        printf("(\\ ");
-        bval_print(v->formals);
-        putchar(' ');
-        bval_print(v->body);
-        putchar(')');
-      }
-      break;
-    case BVAL_NUM:   printf("%lf", v->num);             break;
-    case BVAL_ERR:   printf("Error: %s", v->err);       break;
-    case BVAL_SYM:   printf("%s", v->sym);              break;
-    case BVAL_SEXPR: bval_expr_print(v, '(', ')');      break;
-    case BVAL_QEXPR: bval_expr_print(v, '{', '}');      break;
-    case BVAL_STR:   bval_str_print(v);                 break;
-    case BVAL_OK: break;
-  }
+  bval* s = bval_to_string(v);
+  printf("%s", s->str);
 }
 
 
@@ -475,13 +506,20 @@ void bval_println(bval* v) {
 }
 
 
-void bval_expr_print(bval* v, char open, char close) {
-  putchar(open);
+bval* bval_expr_to_string(bval* v, char* open, char* close) {
+  bval* s = bval_qexpr();
+  bval_add(s, bval_str(open));
+
   for (int i = 0; i < v->count; i++) {
-    bval_print(v->cell[i]);
-    if (i != (v->count - 1)) putchar(' ');
+    bval_add(s, bval_to_string(v->cell[i]));
+    if (i != (v->count - 1)) bval_add(s, bval_str(" "));
   }
-  putchar(close);
+
+  bval_add(s, bval_str(close));
+  benv* e = benv_new();
+  bval* out = builtin_join(e, s);
+  benv_del(e);
+  return out;
 }
 
 

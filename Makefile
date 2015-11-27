@@ -6,4 +6,7 @@ clean:
 interpreter:
 	cd ./interpreter && make
 
-.PHONY: interpreter clean
+test:
+	./interpreter/bin/blisp ./test/index.blisp
+
+.PHONY: interpreter clean test

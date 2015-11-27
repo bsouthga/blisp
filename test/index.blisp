@@ -1,0 +1,11 @@
+;; vim: set ft=clojure:
+
+(load "./test/utils.blisp")
+
+(exit
+  (not
+    (test
+      "all tests"
+      (do
+        (test "passing test" 1)
+        (test "failing test" 0)))))

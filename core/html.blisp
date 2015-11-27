@@ -1,3 +1,4 @@
+;; vim: set ft=clojure:
 ;;
 ;; Core element tag
 ;;
@@ -10,5 +11,5 @@
 ;;
 (def {html} (element "html"))
 (def {body} (element "body"))
-(def {div} (element "div"))
+(def {div}  (element "div"))
 (def {span} (element "span"))

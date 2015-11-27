@@ -112,6 +112,7 @@ bval* bval_sexpr(void);
 bval* bval_qexpr(void);
 bval* bval_fun(bbuiltin fn, char* name);
 bval* bval_lambda(bval* formals, bval* body);
+bval* builtin_to_string(benv* e, bval* a);
 
 bval* bval_read(mpc_ast_t* tree);
 bval* bval_read_num(mpc_ast_t* tree);
@@ -125,13 +126,14 @@ bval* bval_join(bval* x, bval* y);
 bval* bval_eval_sexpr(benv* e, bval* v);
 bval* bval_call(benv* e, bval* f, bval* a);
 bval* bval_copy(bval* v);
+bval* bval_to_string(bval* v);
+bval* bval_expr_to_string(bval* v, char* open, char* close);
 
 int bval_eq(bval* x, bval* y);
 
 void bval_del(bval* v);
 void bval_print(bval* v);
 void bval_println(bval* v);
-void bval_expr_print(bval* v, char open, char close);
 void bval_str_print(bval* v);
 
 char* btype_name(int type);
