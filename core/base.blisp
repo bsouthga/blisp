@@ -25,3 +25,9 @@
 (defn {not x}  {- 1 x})
 (defn {or x y} {+ x y})
 (defn {and a b} {* a b})
+
+;;
+;; create scope for local vars
+;;
+(defn {let _}
+  {((fn {_} _) ())})

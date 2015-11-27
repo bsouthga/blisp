@@ -3,6 +3,26 @@
 #include "benv.c"
 #include "builtins.c"
 
+
+// embedded parser
+void eval_blisp(benv* e, char* code) {
+  mpc_result_t r;
+
+  if (mpc_parse("<stdin>", code, Blisp, &r)) {
+    // print the AST if valid
+    bval* v = bval_eval(e, bval_read(r.output));
+
+    bval_println(v);
+    bval_del(v);
+
+    mpc_ast_delete(r.output);
+  } else {
+    mpc_err_print(r.error);
+    mpc_err_delete(r.error);
+  }
+}
+
+
 int main(int argc, char** argv) {
 
   // create Parsers
@@ -52,30 +72,17 @@ int main(int argc, char** argv) {
     }
   } else {
     puts("blisp version 0.0.1");
-    puts("press ^C to Exit\n");
+    puts("press ^C to Exit");
+    puts("|_ loading prelude...");
+    eval_blisp(e, "(load \"./core/prelude.blisp\")");
 
     while(1) {
-      mpc_result_t r;
       char* input;
-
       // output prompt to stdout and get input
       input = readline("blisp> ");
       add_history(input);
-
-      if (mpc_parse("<stdin>", input, Blisp, &r)) {
-
-        // print the AST if valid
-        bval* v = bval_eval(e, bval_read(r.output));
-
-        bval_println(v);
-        bval_del(v);
-
-        mpc_ast_delete(r.output);
-      } else {
-        mpc_err_print(r.error);
-        mpc_err_delete(r.error);
-      }
-
+      // evaluate input expression
+      eval_blisp(e, input);
       // free up input
       free(input);
     }

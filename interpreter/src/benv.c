@@ -8,6 +8,38 @@ benv* benv_new(void) {
 }
 
 
+void benv_print(benv* e, int show_builtins) {
+  if (!e->parent) {
+    puts("local (root):");
+  } else {
+    puts("local:");
+  }
+  benv_print_level(e, show_builtins, 0);
+}
+
+
+void benv_print_level(benv* e, int show_builtins, int l) {
+  for (int i = 0; i < e->count; i++) {
+    bval* v = e->vals[i];
+    if (show_builtins || v->type != BVAL_FUN || (v->type == BVAL_FUN && !v->builtin)) {
+      for (int t = 0; t < l; t++) printf("  ");
+      printf("  \"%s\":  ", e->syms[i]);
+      bval_println(v);
+    }
+  }
+  if (e->parent) {
+    l++;
+    for (int t = 0; t < l; t++) printf("  ");
+    if (!e->parent->parent) {
+      puts("parent (root):");
+    } else {
+      puts("parent:");
+    }
+    benv_print_level(e->parent, show_builtins, l);
+  }
+}
+
+
 void benv_del(benv* e) {
   for (int i = 0; i < e->count; i++) {
     free(e->syms[i]);
@@ -100,8 +132,10 @@ void benv_add_builtins(benv* e) {
   benv_add_builtin(e, "eval", builtin_eval);
   benv_add_builtin(e, "join", builtin_join);
 
+
   benv_add_builtin(e, "def",   builtin_def);
   benv_add_builtin(e, "var",   builtin_var);
+  benv_add_builtin(e, "env",   builtin_env);
   benv_add_builtin(e, "\\",    builtin_lambda);
   benv_add_builtin(e, "type",  builtin_type);
   benv_add_builtin(e, "load",  builtin_load);

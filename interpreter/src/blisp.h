@@ -91,6 +91,8 @@ mpc_parser_t* Qexpr;
 mpc_parser_t* Expr;
 mpc_parser_t* Blisp;
 
+void eval_blisp(benv* e, char* code);
+
 benv* benv_new(void);
 bval* benv_get(benv* e, bval* k);
 benv* benv_copy(benv* e);
@@ -99,6 +101,8 @@ void benv_del(benv* e);
 void benv_add_builtin(benv* e, char* name, bbuiltin fn);
 void benv_add_builtins(benv* e);
 void benv_def(benv* e, bval* k, bval* v);
+void benv_print_level(benv* e, int show_builtins, int l);
+void benv_print(benv* e, int show_builtins);
 
 bval* bval_num(double num);
 bval* bval_err(char* fmt, ...);
@@ -149,6 +153,7 @@ bval* builtin_show(benv* e, bval* a);
 bval* builtin_exit(benv* e, bval* a);
 bval* builtin_fread(benv* e, bval* a);
 bval* builtin_fwrite(benv* e, bval* a);
+bval* builtin_env(benv* e, bval* a);
 
 
 bval* builtin_head(benv* e, bval* a);

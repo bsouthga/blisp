@@ -14,6 +14,16 @@ bval* builtin_eq(benv* e, bval* a) { return builtin_cmp(e, a, "="); }
 bval* builtin_ne(benv* e, bval* a) { return builtin_cmp(e, a, "!="); }
 
 
+bval* builtin_env(benv* e, bval* a) {
+  ASSERT_ARG_LEN(a, 1, "env");
+  ASSERT_ARG_TYPE(a, 0, BVAL_NUM, "env");
+  bval* show_builtins = bval_pop(a, 0);
+  benv_print(e, show_builtins->num);
+  bval_del(show_builtins);
+  bval_del(a);
+  return bval_ok();
+}
+
 bval* builtin_def(benv* e, bval* a) {
   return builtin_variable(e, a, "def");
 }
@@ -24,7 +34,7 @@ bval* builtin_var(benv* e, bval* a) {
 
 
 bval* builtin_variable(benv* e, bval* a, char* fn) {
-  ASSERT_ARG_TYPE(a, 0, BVAL_QEXPR, "def");
+  ASSERT_ARG_TYPE(a, 0, BVAL_QEXPR, fn);
 
   bval* syms = a->cell[0];
 

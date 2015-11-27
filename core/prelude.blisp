@@ -17,20 +17,6 @@
 (def {curry} unpack)
 (def {uncurry} pack)
 
-;;
-;; run functions in sequence
-;;
-(defn {do :: xs}
-  {if (= xs nil)
-    {nil}
-    {last xs}})
-
-;;
-;; create scope for local vars
-;;
-(defn {let a}
-  {((fn {_} a) ())})
-
 
 ;; flip operators of function
 (defn {flip f a b}
@@ -43,7 +29,7 @@
 
 
 ;; first element
-(defn {first}
+(defn {first l}
   {eval (head l)})
 
 
@@ -56,6 +42,15 @@
 
 (defn {last l}
   {nth (- (len l) 1) l})
+
+
+;;
+;; run functions in sequence
+;;
+(defn {do :: xs}
+  {if (= xs nil)
+    {nil}
+    {last xs}})
 
 
 (defn {take n l}
