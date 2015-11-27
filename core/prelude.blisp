@@ -1,15 +1,60 @@
 ;; vim: set ft=clojure:
 ;;
+;; Basic aliases
+;;
+
+
+;; primatives
+(def {true} 1)
+(def {false} 0)
+(def {nil} {})
+
+
+;; lispy alias for lambda
+(def {fn} \)
+
+
+;;
+;; cleaner function definition
+;;
+(def {defn}
+  (fn {args body}
+    {def (head args)
+      (fn (tail args) body )}))
+
+
+(def {vafn}
+  (fn {args body}
+    {var (head args)
+      (fn (tail args) body )}))
+
+
+;;
+;; logical operators
+;;
+(defn {not x}  {- 1 x})
+(defn {or x y} {+ x y})
+(defn {and a b} {* a b})
+
+
+;;
+;; create scope for local vars
+;;
+(defn {let _}
+  {((fn {_} _) ())})
+
+
+;;
 ;; Functional goodies
 ;;
 
-(load "./core/base.blisp")
 
 ;;
 ;; parameter manipulation
 ;;
 (defn {unpack f l}
   {eval (join (list f) l)})
+
 
 (defn {pack f :: xs}
   {f xs})
@@ -29,9 +74,17 @@
   {f (g x)})
 
 
-;; first element
+;; first, second, third...
 (defn {first l}
   {eval (head l)})
+
+
+(defn {second l}
+  {eval (head (tail l))})
+
+
+(defn {third l}
+  {eval (head (tail (tail l)))})
 
 
 ;; list methods
@@ -43,6 +96,7 @@
 
 (defn {last l}
   {nth (- (len l) 1) l})
+
 
 ;;
 ;; run functions in sequence
@@ -65,23 +119,36 @@
     {l}
     {drop (- n 1) (tail l)}})
 
+
 (defn {map f l}
   {if (= nil l)
     {l}
     {cons (f (first l)) (map f (tail l))}})
+
 
 (defn {foldl f a l}
   {if (= l nil)
     {a}
     {foldl f (f a (first l)) (tail l)}})
 
+
+(def {reduce} foldl)
 (defn {sum l} {foldl + 0 l})
 (defn {product l} {foldl * 1 l})
 
-;;
-;; TODO
-;;
-;; - any
-;; - all
-;; - case
-;;
+
+(def {otherwise} true)
+(defn {select :: xs}
+  {if (= xs nil)
+    {error "No matching case for select!"}
+    {if (first (first xs))
+      {second (first xs)}
+      {unpack select (tail xs)}}})
+
+
+(defn {any :: xs}
+  {sum xs})
+
+
+(defn {all :: xs}
+  {product xs})

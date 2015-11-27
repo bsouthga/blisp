@@ -45,8 +45,8 @@ void benv_del(benv* e) {
     free(e->syms[i]);
     bval_del(e->vals[i]);
   }
-  free(e->syms);
-  free(e->vals);
+  if (e->syms) free(e->syms);
+  if (e->vals) free(e->vals);
   free(e);
 }
 
