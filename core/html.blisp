@@ -1,0 +1,14 @@
+;;
+;; Core element tag
+;;
+(defn {element tag}
+  {(fn {tag body} {join "<" tag ">" body "</" tag ">"})
+    tag })
+
+;;
+;; basic elements
+;;
+(def {html} (element "html"))
+(def {body} (element "body"))
+(def {div} (element "div"))
+(def {span} (element "span"))
