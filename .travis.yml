@@ -1,2 +1,2 @@
 language: c
-script: make install && make && make check
+script: sudo make install && make && make check
