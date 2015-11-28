@@ -1,12 +1,12 @@
 all: interpreter
 
-clean:
-	cd ./interpreter && make clean
-
 interpreter:
 	cd ./interpreter && make
 
-test:
+clean:
+	cd ./interpreter && make clean
+
+check:
 	./interpreter/bin/blisp ./test/index.blisp
 
-.PHONY: interpreter clean test
+.PHONY: interpreter clean check

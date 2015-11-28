@@ -1,23 +1,38 @@
 ;;
 ;; Testing utilities
 ;;
-
 (load "./core/prelude.blisp")
 
 
-(defn {test name assertion}
-  {do
+(defn {test xs}
+  {let {do
+    (var {name} (first xs))
+    (var {assertion} (second xs))
     (print
-      (join name
+      (joins name
         (if assertion
           {" -- passed!"}
           {" -- failed!"})))
-    assertion})
+    assertion}})
 
 
-(defn {run-tests :: tests}
-  {let {
-    do (var {total} (sum tests))
-       (if total
-         {print (join total " tests failed!")}
-         {print "All tests pass!"})}})
+;;
+;; test runner
+;;
+(defn {run-tests title :: tests}
+  {let {do
+    (print (joins "Running tests for -- " title))
+    (var {total-tests} (len tests))
+    (var {passing} (sum (map test tests)))
+      ;; if not all tests passing, print number of failed tests
+      (if (not (= total-tests passing))
+        ;; failed tests
+       {do (print
+              (joins (- total-tests passing)
+                     "/"
+                     total-tests
+                     " tests failing!"))
+           (exit 1)}
+        ;; All tests successful!
+       {do (print "All tests pass!")
+           (exit 0)})}})

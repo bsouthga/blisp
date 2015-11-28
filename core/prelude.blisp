@@ -28,11 +28,9 @@
     {var (head args)
       (fn (tail args) body )}))
 
-
 ;;
 ;; logical operators
 ;;
-(defn {not x}  {- 1 x})
 (defn {or x y} {+ x y})
 (defn {and a b} {* a b})
 
@@ -152,3 +150,7 @@
 
 (defn {all :: xs}
   {product xs})
+
+
+(defn {joins :: xs}
+  {unpack join (map string (cons "" xs))})

@@ -467,7 +467,11 @@ bval* bval_to_string(bval* v) {
       break;
 
     case BVAL_NUM:
-      snprintf(buffer, sizeof(buffer), "%lf", v->num);
+      if (ceilf(v->num) == v->num) {
+        snprintf(buffer, sizeof(buffer), "%i", ((int) v->num));
+      } else {
+        snprintf(buffer, sizeof(buffer), "%lf", v->num);
+      }
       bval_add(s, bval_str(buffer));
       break;
 
@@ -487,6 +491,7 @@ bval* bval_to_string(bval* v) {
   benv_del(e);
   return out;
 }
+
 
 
 

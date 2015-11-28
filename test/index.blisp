@@ -1,11 +1,14 @@
 ;; vim: set ft=clojure:
-
 (load "./test/utils.blisp")
 
-(exit
-  (not
-    (test
-      "all tests"
-      (do
-        (test "passing test" 1)
-        (test "failing test" 0)))))
+(run-tests
+  "Prelude"
+  ;; primative aliases
+  {"primatives" (all
+    (= true 1)
+    (= false 0)
+    (= nil {}))}
+  ;; negation function
+  {"not" (all
+    (not 0)
+    (not (not 1)))})
